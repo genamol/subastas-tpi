@@ -4,17 +4,6 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### Archivos del agente (no van al repo) ###
-agent.md
-CLAUDE.md
-claude.md
-copiarTodo.js
-generar_pdfs.py
-proyecto_agent.txt
-proyecto_code.txt
-proyecto_tree.txt
-.agent/
-
 ### STS ###
 .apt_generated
 .classpath
