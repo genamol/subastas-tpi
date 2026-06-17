@@ -18,7 +18,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
-    // Endpoints que no requieren token
+    // Endpoints que no necesitan token
     private static final List<String> RUTAS_PUBLICAS = List.of(
         "/api/auth/register",
         "/api/auth/login",
