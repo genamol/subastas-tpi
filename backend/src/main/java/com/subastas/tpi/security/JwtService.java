@@ -52,7 +52,7 @@ public class JwtService {
                 .compact();
     }
 
-    // Validación matemática, sin tocar la base de datos
+    // Validacion, sin tocar la base de datos
     public Claims validateToken(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
@@ -60,11 +60,12 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-
-    @NonNull
-    public Long extractUserId(String token) {
+    // Extrae el userId del subject, asumiendo que el token ya fue validado
+    @SuppressWarnings("null")
+    public @NonNull Long extractUserId(String token) {
         // El subject siempre existe porque el token ya fue validado
-        return Long.valueOf(validateToken(token).getSubject());
+        Long id = Long.valueOf(validateToken(token).getSubject());
+        return id;
     }
 
     public boolean isTokenValid(String token) {

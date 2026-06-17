@@ -94,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("token.invalido", HttpStatus.UNAUTHORIZED);
         }
 
-        // Verifica que no esté en la blacklist
+        // Verifica que no est en la blacklist
         if (tokenBlacklistRepository.existsByToken(refreshToken)) {
             throw new BusinessException("token.invalido", HttpStatus.UNAUTHORIZED);
         }
