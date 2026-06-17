@@ -9,6 +9,7 @@ import com.subastas.tpi.repository.ProductoRepository;
 import com.subastas.tpi.service.CategoriaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     @Override
     @Transactional
-    public CategoriaResponse actualizar(Long id, CategoriaRequest request) {
+    public CategoriaResponse actualizar(@NonNull Long id, CategoriaRequest request) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("categoria.no.encontrada", HttpStatus.NOT_FOUND));
 
@@ -57,7 +58,7 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     @Override
     @Transactional(readOnly = true)
-    public CategoriaResponse obtenerPorId(Long id) {
+    public CategoriaResponse obtenerPorId(@NonNull Long id) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("categoria.no.encontrada", HttpStatus.NOT_FOUND));
         return mapToResponse(categoria);
@@ -73,7 +74,7 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     @Override
     @Transactional
-    public void eliminar(Long id) {
+    public void eliminar(@NonNull Long id) {
         if (!categoriaRepository.existsById(id)) {
             throw new BusinessException("categoria.no.encontrada", HttpStatus.NOT_FOUND);
         }

@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -60,7 +61,9 @@ public class JwtService {
                 .getPayload();
     }
 
+    @NonNull
     public Long extractUserId(String token) {
+        // El subject siempre existe porque el token ya fue validado
         return Long.valueOf(validateToken(token).getSubject());
     }
 

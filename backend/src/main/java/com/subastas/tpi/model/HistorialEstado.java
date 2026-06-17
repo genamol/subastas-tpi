@@ -27,6 +27,7 @@ public class HistorialEstado {
     @Column(nullable = false)
     private EstadoSubasta estadoNuevo;
 
+    @Builder.Default
     @Column(nullable = false)
     private Instant fecha = Instant.now();
 
