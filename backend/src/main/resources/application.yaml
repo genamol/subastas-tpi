@@ -5,7 +5,7 @@ spring:
     password: tu_password_local
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -18,3 +18,8 @@ jwt:
   secret-key: ${JWT_SECRET_KEY:claveSecretaSuperSeguraParaLaUtnFrvmProgramacionCuatro2026}
   access-expiration: 900000    # 15 minutos (en milisegundos)
   refresh-expiration: 604800000 # 7 días (en milisegundos)
+
+# Scheduler de cierre automático de subastas
+subasta:
+  cierre:
+    intervalo-ms: 30000  # cada 30 segundos

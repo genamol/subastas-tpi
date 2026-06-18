@@ -16,7 +16,6 @@ import com.subastas.tpi.service.PujaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +32,7 @@ public class PujaServiceImpl implements PujaService {
 
     @Override
     @Transactional
-    public PujaResponse pujar(@NonNull Long userId, PujaRequest request) {
+    public PujaResponse pujar(Long userId, PujaRequest request) {
         Usuario ofertante = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
 

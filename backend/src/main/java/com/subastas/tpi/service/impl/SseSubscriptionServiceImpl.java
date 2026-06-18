@@ -4,7 +4,6 @@ import com.subastas.tpi.dto.response.PujaSseDto;
 import com.subastas.tpi.model.enums.EstadoSubasta;
 import com.subastas.tpi.service.SseSubscriptionService;
 
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -45,7 +44,7 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
     }
 
     @Override
-    public void emitirPuja(Long subastaId, @NonNull PujaSseDto datos) {
+    public void emitirPuja(Long subastaId, PujaSseDto datos) {
         List<SseEmitter> lista = emisores.get(subastaId);
         if (lista == null) return;
 
@@ -97,7 +96,7 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
     }
 
     @Override
-    public void emitirPujaAdmin(Long subastaId, @NonNull PujaSseDto datosCompletos) {
+    public void emitirPujaAdmin(Long subastaId, PujaSseDto datosCompletos) {
         for (SseEmitter emisor : emisoresAdmin) {
             try {
                 emisor.send(SseEmitter.event()
