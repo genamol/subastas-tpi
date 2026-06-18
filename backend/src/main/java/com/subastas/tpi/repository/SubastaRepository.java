@@ -19,9 +19,9 @@ import java.util.Optional;
 
 public interface SubastaRepository extends JpaRepository<Subasta, Long> {
 
-    // Bloqueo pesimista para evitar colisiones al registrar pujas
+    // Bloqueo pesimista
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints(@QueryHint( name = "jakarta.persistence.lock.timeout", value = "3000")) // Timeout de 3 segundos para el bloqueo
+    @QueryHints(@QueryHint( name = "jakarta.persistence.lock.timeout", value = "3000"))
     @Query("SELECT s FROM Subasta s WHERE s.id = :id")
     Optional<Subasta> findByIdForUpdate(@Param("id") Long id);
 
@@ -30,4 +30,7 @@ public interface SubastaRepository extends JpaRepository<Subasta, Long> {
     List<Subasta> findByEstadoAndFechaInicioBefore(EstadoSubasta estado, Instant fecha);
 
     List<Subasta> findByEstadoAndFechaCierreBefore(EstadoSubasta estado, Instant fecha);
+
+    boolean existsByProductoIdAndEstadoIn(Long productoId, List<EstadoSubasta> estados);
+
 }
