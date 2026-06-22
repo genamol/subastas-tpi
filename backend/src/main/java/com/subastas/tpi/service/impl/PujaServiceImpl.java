@@ -83,7 +83,8 @@ public class PujaServiceImpl implements PujaService {
                 .fechaPuja(puja.getFechaPuja())
                 .build();
 
-        eventPublisher.publishEvent(new NuevaPujaEvent(subasta.getId(), sseDto));
+        eventPublisher.publishEvent(new NuevaPujaEvent(
+                subasta.getId(), sseDto, ofertante.getId(), ofertante.getNombre()));
 
         return PujaResponse.builder()
                 .id(puja.getId())

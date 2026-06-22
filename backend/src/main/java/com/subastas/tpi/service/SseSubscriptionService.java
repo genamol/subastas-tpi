@@ -1,5 +1,6 @@
 package com.subastas.tpi.service;
 
+import com.subastas.tpi.dto.response.PujaAdminSseDto;
 import com.subastas.tpi.dto.response.PujaSseDto;
 import com.subastas.tpi.model.enums.EstadoSubasta;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -13,7 +14,7 @@ public interface SseSubscriptionService {
 
     // Canal admin: global, todas las subastas, datos completos
     SseEmitter suscribirAdmin(Long adminId);
-    void emitirPujaAdmin(Long subastaId, PujaSseDto datosCompletos);
+    void emitirPujaAdmin(Long subastaId, PujaAdminSseDto datosCompletos);
     void emitirEstadoAdmin(Long subastaId, EstadoSubasta estadoNuevo);
 
     void removerPorUsuario(Long userId);

@@ -1,5 +1,6 @@
 package com.subastas.tpi.service.impl;
 
+import com.subastas.tpi.dto.response.PujaAdminSseDto;
 import com.subastas.tpi.dto.response.PujaSseDto;
 import com.subastas.tpi.model.enums.EstadoSubasta;
 import com.subastas.tpi.service.SseSubscriptionService;
@@ -96,7 +97,7 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
     }
 
     @Override
-    public void emitirPujaAdmin(Long subastaId, PujaSseDto datosCompletos) {
+    public void emitirPujaAdmin(Long subastaId, PujaAdminSseDto datosCompletos) {
         for (SseEmitter emisor : emisoresAdmin) {
             try {
                 emisor.send(SseEmitter.event()

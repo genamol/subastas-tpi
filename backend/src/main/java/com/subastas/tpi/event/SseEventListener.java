@@ -1,5 +1,6 @@
 package com.subastas.tpi.event;
 
+import com.subastas.tpi.dto.response.PujaAdminSseDto;
 import com.subastas.tpi.service.SseSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -14,9 +15,17 @@ public class SseEventListener {
     @EventListener
     public void onNuevaPuja(NuevaPujaEvent event) {
         sseService.emitirPuja(event.subastaId(), event.datos());
-        // Admin recibe los mismos datos pero para el admin , no anonimo 
-        // duplicamos el envio al canal admin
-        sseService.emitirPujaAdmin(event.subastaId(), event.datos());
+
+        PujaAdminSseDto adminDto = PujaAdminSseDto.builder()
+                .subastaId(event.subastaId())
+                .monto(event.datos().getMonto())
+                .montoActual(event.datos().getMontoActual())
+                .fechaPuja(event.datos().getFechaPuja())
+                .ofertanteId(event.ofertanteId())
+                .ofertanteNombre(event.ofertanteNombre())
+                .build();
+
+        sseService.emitirPujaAdmin(event.subastaId(), adminDto);
     }
 
     @EventListener
