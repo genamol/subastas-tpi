@@ -1,6 +1,7 @@
 package com.subastas.tpi.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 
 public class BusinessException extends RuntimeException {
 
@@ -13,9 +14,10 @@ public class BusinessException extends RuntimeException {
 
     public BusinessException(String mensaje, HttpStatus status) {
         super(mensaje);
-        this.status = status;
+        this.status = status != null ? status : HttpStatus.BAD_REQUEST;
     }
 
+    @NonNull
     public HttpStatus getStatus() {
         return status;
     }
