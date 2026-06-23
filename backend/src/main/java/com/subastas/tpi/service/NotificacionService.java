@@ -1,0 +1,14 @@
+package com.subastas.tpi.service;
+
+import com.subastas.tpi.dto.response.NotificacionResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface NotificacionService {
+
+    Page<NotificacionResponse> obtenerMisNotificaciones(Long usuarioId, Pageable pageable);
+
+    void marcarComoLeida(Long notificacionId, Long usuarioId);
+
+    long contarNoLeidas(Long usuarioId);
+}
