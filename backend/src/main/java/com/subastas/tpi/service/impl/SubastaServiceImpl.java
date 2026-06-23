@@ -112,6 +112,27 @@ public class SubastaServiceImpl implements SubastaService {
     }
 
     @Override
+    @Transactional
+    public SubastaResponse cancelarSubastaAdmin(Long id, Long adminId) {
+        Subasta subasta = subastaRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
+
+        EstadoSubasta estadoActual = subasta.getEstado();
+        if (estadoActual == EstadoSubasta.FINALIZADA || estadoActual == EstadoSubasta.CANCELADA) {
+            throw new BusinessException("subasta.estado.invalido.cancelar", HttpStatus.BAD_REQUEST);
+        }
+
+        Usuario admin = usuarioRepository.findById(adminId)
+                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+
+        subasta.setEstado(EstadoSubasta.CANCELADA);
+        Subasta actualizada = subastaRepository.save(subasta);
+        registrarHistorialEstado(actualizada, estadoActual, EstadoSubasta.CANCELADA, "Cancelada por administrador", admin);
+
+        return mapToResponse(actualizada);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public SubastaResponse obtenerPorId(Long id) {
         Subasta subasta = subastaRepository.findById(id)

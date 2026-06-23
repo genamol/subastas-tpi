@@ -1,0 +1,52 @@
+package com.subastas.tpi.controller;
+
+import com.subastas.tpi.dto.request.SubastaRequest;
+import com.subastas.tpi.dto.response.SubastaResponse;
+import com.subastas.tpi.model.Usuario;
+import com.subastas.tpi.service.SubastaService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/subastas")
+@RequiredArgsConstructor
+public class SubastaController {
+
+    private final SubastaService subastaService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SubastaResponse> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(subastaService.obtenerPorId(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<SubastaResponse> crear(@Valid @RequestBody SubastaRequest request,
+                                                  @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(subastaService.crearSubasta(request, usuario.getId()));
+    }
+
+    @PutMapping("/{id}/publicar")
+    public ResponseEntity<SubastaResponse> publicar(@PathVariable Long id,
+                                                     @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(subastaService.publicarSubasta(id, usuario.getId()));
+    }
+
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<SubastaResponse> cancelar(@PathVariable Long id,
+                                                     @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(subastaService.cancelarSubasta(id, usuario.getId()));
+    }
+
+    @PutMapping("/{id}/cancelar-admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SubastaResponse> cancelarAdmin(@PathVariable Long id,
+                                                          @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(subastaService.cancelarSubastaAdmin(id, usuario.getId()));
+    }
+}

@@ -8,6 +8,7 @@ public interface SubastaService {
     SubastaResponse crearSubasta(SubastaRequest request, Long vendedorId);
     SubastaResponse publicarSubasta(Long id, Long vendedorId);
     SubastaResponse cancelarSubasta(Long id, Long vendedorId);
+    SubastaResponse cancelarSubastaAdmin(Long id, Long adminId);
     SubastaResponse obtenerPorId(Long id);
     void procesarCierresAutomaticos();
 
