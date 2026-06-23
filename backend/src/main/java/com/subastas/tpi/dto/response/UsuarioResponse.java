@@ -12,15 +12,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductoResponse {
+public class UsuarioResponse {
 
     private Long id;
     private String nombre;
-    private String descripcion;
+    private String email;
+    private boolean bloqueado;
     private Instant createdAt;
-    private Long vendedorId;
-    private String vendedorNombre;
-    private Long categoriaId;
-    private String categoriaNombre;
-    private List<String> imagenes;
+    private List<String> roles;
 }
