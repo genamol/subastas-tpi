@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Objects;
+
 @Tag(name = "Pujas", description = "Registro de pujas en subastas activas")
 @RestController
 @RequestMapping("/api/pujas")
@@ -41,7 +43,7 @@ public class PujaController {
     public ResponseEntity<PujaResponse> pujar(@Valid @RequestBody PujaRequest request,
                                               Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        PujaResponse response = pujaService.pujar(userId, request);
+        PujaResponse response = pujaService.pujar(Objects.requireNonNull(userId), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

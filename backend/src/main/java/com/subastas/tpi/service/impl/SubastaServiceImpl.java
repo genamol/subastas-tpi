@@ -19,10 +19,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -36,11 +38,11 @@ public class SubastaServiceImpl implements SubastaService {
 
     @Override
     @Transactional
-    public SubastaResponse crear(Long userId, SubastaRequest request) {
+    public SubastaResponse crear(@NonNull Long userId, SubastaRequest request) {
         Usuario vendedor = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
 
-        Producto producto = productoRepository.findById(request.getProductoId())
+        Producto producto = productoRepository.findById(Objects.requireNonNull(request.getProductoId()))
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
 
         Subasta subasta = new Subasta();
@@ -63,7 +65,7 @@ public class SubastaServiceImpl implements SubastaService {
 
     @Override
     @Transactional
-    public SubastaResponse publicar(Long userId, Long subastaId) {
+    public SubastaResponse publicar(@NonNull Long userId, @NonNull Long subastaId) {
         Subasta subasta = subastaRepository.findById(subastaId)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
@@ -78,7 +80,7 @@ public class SubastaServiceImpl implements SubastaService {
 
     @Override
     @Transactional
-    public SubastaResponse cancelar(Long userId, Long subastaId, String motivo) {
+    public SubastaResponse cancelar(@NonNull Long userId, @NonNull Long subastaId, String motivo) {
         Subasta subasta = subastaRepository.findById(subastaId)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
@@ -107,7 +109,7 @@ public class SubastaServiceImpl implements SubastaService {
 
     @Override
     @Transactional(readOnly = true)
-    public SubastaResponse obtenerPorId(Long subastaId) {
+    public SubastaResponse obtenerPorId(@NonNull Long subastaId) {
         Subasta subasta = subastaRepository.findById(subastaId)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
@@ -134,13 +136,13 @@ public class SubastaServiceImpl implements SubastaService {
 
     private void registrarHistorial(Subasta subasta, EstadoSubasta anterior, EstadoSubasta nuevo,
                                     Usuario responsable, String motivo) {
-        HistorialEstado historial = HistorialEstado.builder()
-                .subasta(subasta)
-                .estadoAnterior(anterior)
-                .estadoNuevo(nuevo)
-                .usuarioResponsable(responsable)
-                .motivo(motivo)
-                .build();
+        HistorialEstado historial = new HistorialEstado();
+        historial.setSubasta(subasta);
+        historial.setEstadoAnterior(anterior);
+        historial.setEstadoNuevo(nuevo);
+        historial.setUsuarioResponsable(responsable);
+        historial.setMotivo(motivo);
+
         historialEstadoRepository.save(historial);
     }
 

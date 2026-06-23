@@ -9,6 +9,7 @@ import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.service.NotificacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,7 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     @Transactional
-    public void notificarVendedorNuevaPuja(Long subastaId) {
+    public Notificacion notificarVendedorNuevaPuja(@NonNull Long subastaId) {
         Subasta subasta = subastaRepository.findById(subastaId)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
@@ -31,6 +32,6 @@ public class NotificacionServiceImpl implements NotificacionService {
         notificacion.setDestinatario(subasta.getVendedor());
         notificacion.setSubasta(subasta);
 
-        notificacionRepository.save(notificacion);
+        return notificacionRepository.save(notificacion);
     }
 }

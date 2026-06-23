@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Objects;
+
 @Tag(name = "Subastas", description = "Gestión y consulta de subastas")
 @RestController
 @RequestMapping("/api/subastas")
@@ -47,7 +49,7 @@ public class SubastaController {
     public ResponseEntity<SubastaResponse> crear(@Valid @RequestBody SubastaRequest request,
                                                   Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        SubastaResponse response = subastaService.crear(userId, request);
+        SubastaResponse response = subastaService.crear(Objects.requireNonNull(userId), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -61,7 +63,7 @@ public class SubastaController {
     public ResponseEntity<SubastaResponse> publicar(@PathVariable Long id,
                                                      Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        SubastaResponse response = subastaService.publicar(userId, id);
+        SubastaResponse response = subastaService.publicar(Objects.requireNonNull(userId), Objects.requireNonNull(id));
         return ResponseEntity.ok(response);
     }
 
@@ -77,7 +79,7 @@ public class SubastaController {
                                                      @RequestParam(required = false) String motivo,
                                                      Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        SubastaResponse response = subastaService.cancelar(userId, id, motivo);
+        SubastaResponse response = subastaService.cancelar(Objects.requireNonNull(userId), Objects.requireNonNull(id), motivo);
         return ResponseEntity.ok(response);
     }
 
@@ -95,6 +97,6 @@ public class SubastaController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<SubastaResponse> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(subastaService.obtenerPorId(id));
+        return ResponseEntity.ok(subastaService.obtenerPorId(Objects.requireNonNull(id)));
     }
 }

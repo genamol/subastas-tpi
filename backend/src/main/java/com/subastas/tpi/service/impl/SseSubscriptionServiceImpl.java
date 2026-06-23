@@ -1,10 +1,12 @@
 package com.subastas.tpi.service.impl;
 
+import com.subastas.tpi.dto.response.NotificacionResponse;
 import com.subastas.tpi.dto.response.PujaAdminSseDto;
 import com.subastas.tpi.dto.response.PujaSseDto;
 import com.subastas.tpi.model.enums.EstadoSubasta;
 import com.subastas.tpi.service.SseSubscriptionService;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -45,7 +47,7 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
     }
 
     @Override
-    public void emitirPuja(Long subastaId, PujaSseDto datos) {
+    public void emitirPuja(Long subastaId, @NonNull PujaSseDto datos) {
         List<SseEmitter> lista = emisores.get(subastaId);
         if (lista == null) return;
 
@@ -97,7 +99,7 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
     }
 
     @Override
-    public void emitirPujaAdmin(Long subastaId, PujaAdminSseDto datosCompletos) {
+    public void emitirPujaAdmin(Long subastaId, @NonNull PujaAdminSseDto datosCompletos) {
         for (SseEmitter emisor : emisoresAdmin) {
             try {
                 emisor.send(SseEmitter.event()
@@ -133,6 +135,67 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
                 // El emisor ya estaba cerrado
             }
         }));
+        removerNotificacionesPorUsuario(userId);
+    }
+
+    // Canal de notificaciones push por usuario
+    private final Map<Long, List<SseEmitter>> emisoresNotificaciones = new ConcurrentHashMap<>();
+
+    @Override
+    public SseEmitter suscribirNotificaciones(Long userId) {
+        SseEmitter emitter = new SseEmitter(600_000L);
+        emisoresNotificaciones.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(emitter);
+
+        emitter.onCompletion(() -> removerNotificacion(userId, emitter));
+        emitter.onTimeout(() -> removerNotificacion(userId, emitter));
+        emitter.onError(e -> removerNotificacion(userId, emitter));
+
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("conectado-notificaciones")
+                    .data("{\"userId\":" + userId + "}"));
+        } catch (IOException e) {
+            removerNotificacion(userId, emitter);
+        }
+
+        return emitter;
+    }
+
+    @Override
+    public void emitirNotificacion(Long userId, @NonNull NotificacionResponse notificacion) {
+        List<SseEmitter> lista = emisoresNotificaciones.get(userId);
+        if (lista == null) return;
+
+        for (SseEmitter emisor : lista) {
+            try {
+                emisor.send(SseEmitter.event()
+                        .name("notificacion-nueva")
+                        .data(notificacion));
+            } catch (IOException e) {
+                removerNotificacion(userId, emisor);
+            }
+        }
+    }
+
+    @Override
+    public void removerNotificacionesPorUsuario(Long userId) {
+        List<SseEmitter> lista = emisoresNotificaciones.remove(userId);
+        if (lista == null) return;
+
+        for (SseEmitter emisor : lista) {
+            try {
+                emisor.completeWithError(new SecurityException("Usuario bloqueado"));
+            } catch (Exception ignored) {
+                // El emisor ya estaba cerrado
+            }
+        }
+    }
+
+    private void removerNotificacion(Long userId, SseEmitter emitter) {
+        List<SseEmitter> lista = emisoresNotificaciones.get(userId);
+        if (lista != null) {
+            lista.remove(emitter);
+        }
     }
 
     private void remover(Long subastaId, SseEmitter emitter) {
