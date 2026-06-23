@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -73,7 +74,6 @@ public class SubastaServiceImpl implements SubastaService {
             throw new BusinessException("subasta.no.autorizada", HttpStatus.FORBIDDEN);
         }
 
-
         if (subasta.getEstado() != EstadoSubasta.BORRADOR) {
             throw new BusinessException("subasta.estado.invalido.publicar", HttpStatus.BAD_REQUEST);
         }
@@ -82,7 +82,6 @@ public class SubastaServiceImpl implements SubastaService {
         Subasta actualizada = subastaRepository.save(subasta);
         registrarHistorialEstado(actualizada, EstadoSubasta.PUBLICADA, "Subasta publicada", subasta.getVendedor());
         return mapToResponse(actualizada);
-
     }
 
     @Override
@@ -91,16 +90,13 @@ public class SubastaServiceImpl implements SubastaService {
         Subasta subasta = subastaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
-
         if (!subasta.getVendedor().getId().equals(vendedorId)) {
             throw new BusinessException("subasta.no.autorizada", HttpStatus.FORBIDDEN);
         }
 
-
         if (subasta.getPujas() != null && !subasta.getPujas().isEmpty()) {
             throw new BusinessException("subasta.tiene.pujas", HttpStatus.BAD_REQUEST);
         }
-
 
         EstadoSubasta estadoActual = subasta.getEstado();
         if (estadoActual != EstadoSubasta.BORRADOR && estadoActual != EstadoSubasta.PUBLICADA && estadoActual != EstadoSubasta.ACTIVA) {
@@ -122,7 +118,34 @@ public class SubastaServiceImpl implements SubastaService {
         return mapToResponse(subasta);
     }
 
-    // Método helper para registrar auditoría de cambios de estado (HistorialEstado)
+    @Override
+    @Transactional
+    public void procesarCierresAutomaticos() {
+        Instant ahora = Instant.now();
+
+        List<Subasta> aActivar = subastaRepository.findByEstadoAndFechaInicioBefore(EstadoSubasta.PUBLICADA, ahora);
+        for (Subasta subasta : aActivar) {
+            subasta.setEstado(EstadoSubasta.ACTIVA);
+            subastaRepository.save(subasta);
+            registrarHistorialEstado(subasta, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
+        }
+
+        List<Subasta> aCerrar = subastaRepository.findByEstadoAndFechaCierreBefore(EstadoSubasta.ACTIVA, ahora);
+        for (Subasta subasta : aCerrar) {
+            boolean tienePujas = subasta.getPujas() != null && !subasta.getPujas().isEmpty();
+            EstadoSubasta nuevoEstado = tienePujas ? EstadoSubasta.ADJUDICADA : EstadoSubasta.FINALIZADA;
+
+            subasta.setEstado(nuevoEstado);
+            if (tienePujas) {
+                subasta.setFechaAdjudicacion(ahora);
+            }
+            subastaRepository.save(subasta);
+
+            String motivo = tienePujas ? "Adjudicada automáticamente al vencer el tiempo" : "Finalizada automáticamente sin ofertas";
+            registrarHistorialEstado(subasta, nuevoEstado, motivo, null);
+        }
+    }
+
     private void registrarHistorialEstado(Subasta subasta, EstadoSubasta nuevo, String motivo, Usuario responsable) {
         HistorialEstado historial = HistorialEstado.builder()
                 .subasta(subasta)
