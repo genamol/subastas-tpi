@@ -68,6 +68,7 @@ public class UsuarioServiceImpl implements UsuarioService {
             .id(usuario.getId())
             .nombre(usuario.getNombre())
             .email(usuario.getEmail())
+            .telefono(usuario.getTelefono())
             .bloqueado(usuario.isBloqueado())
             .createdAt(usuario.getCreatedAt())
             .roles(roles)

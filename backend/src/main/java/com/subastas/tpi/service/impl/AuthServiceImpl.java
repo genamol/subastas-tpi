@@ -56,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
         usuario.setNombre(request.getNombre());
         usuario.setEmail(request.getEmail());
         usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        usuario.setTelefono(request.getTelefono());
 
         var rolUser = rolRepository.findByNombre(RolNombre.USER)
             .orElseThrow(() -> new BusinessException("Rol USER no encontrado"));
