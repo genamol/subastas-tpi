@@ -68,6 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var claims = jwtService.validateToken(token);
         String email = claims.get("email", String.class);
 
+        // JWT claims devuelve raw List, la firma ya garantiza que los roles son strings
         @SuppressWarnings("unchecked")
         List<String> roles = claims.get("roles", List.class);
 

@@ -17,12 +17,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
+// usamos supress por los warnings de lombok si no hay que hacer el constructor manual
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 public class ProductoServiceImpl implements ProductoService {
@@ -34,7 +37,7 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     @Transactional
-    public ProductoResponse crear(ProductoRequest request, Long vendedorId) {
+    public ProductoResponse crear(ProductoRequest request, @NonNull Long vendedorId) {
         Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
 

@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Objects;
@@ -76,7 +75,6 @@ public class SubastaController {
     })
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<SubastaResponse> cancelar(@PathVariable Long id,
-                                                     @RequestParam(required = false) String motivo,
                                                      Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
         SubastaResponse response = subastaService.cancelarSubasta(Objects.requireNonNull(id), Objects.requireNonNull(userId));

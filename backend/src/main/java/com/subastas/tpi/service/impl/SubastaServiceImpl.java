@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 
+// usamos supress por los warnings de lombok si no hay que hacer el constructor manual
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 public class SubastaServiceImpl implements SubastaService {
