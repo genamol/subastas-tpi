@@ -15,7 +15,7 @@ public class BusinessException extends RuntimeException {
 
     public BusinessException(String mensaje, @NonNull HttpStatus status) {
         super(mensaje);
-        this.status = status;
+        this.status = status != null ? status : HttpStatus.BAD_REQUEST;
     }
 
     @NonNull

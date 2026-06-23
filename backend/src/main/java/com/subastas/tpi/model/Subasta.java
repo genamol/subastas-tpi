@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "subastas")
@@ -53,4 +55,13 @@ public class Subasta {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ganador_id")
     private Usuario ganador;
+
+    @OneToMany(mappedBy = "subasta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Puja> pujas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subasta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<HistorialEstado> historialEstados = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subasta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Notificacion> notificaciones = new ArrayList<>();
 }

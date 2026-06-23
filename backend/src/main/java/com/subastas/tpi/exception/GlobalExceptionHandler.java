@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestControllerAdvice
@@ -19,7 +20,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
         HttpStatusCode status = ex.getStatus();
         return ResponseEntity.status(status)
-                .body(ErrorResponse.of(status.value(), ex.getMessage()));
+                .body(ErrorResponse.builder()
+                        .status(status.value())
+                        .mensaje(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -30,23 +35,31 @@ public class GlobalExceptionHandler {
             .toList();
 
         return ResponseEntity.badRequest()
-                .body(ErrorResponse.withErrors(
-                        HttpStatus.BAD_REQUEST.value(),
-                        "Error de validación",
-                        errores));
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .mensaje("Error de validación")
+                        .errores(errores)
+                        .timestamp(Instant.now())
+                        .build());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAcceso(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.of(HttpStatus.FORBIDDEN.value(), "Acceso denegado"));
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.FORBIDDEN.value())
+                        .mensaje("Acceso denegado")
+                        .timestamp(Instant.now())
+                        .build());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ErrorResponse.of(
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "Error interno del servidor"));
+                .body(ErrorResponse.builder()
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                        .mensaje("Error interno del servidor")
+                        .timestamp(Instant.now())
+                        .build());
     }
 }

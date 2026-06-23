@@ -2,7 +2,6 @@ package com.subastas.tpi.service.impl;
 
 import com.subastas.tpi.dto.request.SubastaRequest;
 import com.subastas.tpi.dto.response.SubastaResponse;
-import com.subastas.tpi.event.EstadoCambiadoEvent;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.HistorialEstado;
 import com.subastas.tpi.model.Producto;
@@ -15,16 +14,14 @@ import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.service.SubastaService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -34,85 +31,92 @@ public class SubastaServiceImpl implements SubastaService {
     private final ProductoRepository productoRepository;
     private final UsuarioRepository usuarioRepository;
     private final HistorialEstadoRepository historialEstadoRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
-    public SubastaResponse crear(@NonNull Long userId, SubastaRequest request) {
-        Usuario vendedor = usuarioRepository.findById(userId)
+    public SubastaResponse crearSubasta(SubastaRequest request, Long vendedorId) {
+        Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
 
-        Producto producto = productoRepository.findById(Objects.requireNonNull(request.getProductoId()))
+        Producto producto = productoRepository.findById(request.getProductoId())
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
 
+        if (!producto.getVendedor().getId().equals(vendedorId)) {
+            throw new BusinessException("producto.no.autorizado", HttpStatus.FORBIDDEN);
+        }
+
+        if (request.getFechaCierre().isBefore(request.getFechaInicio())) {
+            throw new BusinessException("subasta.fechas.invalidas", HttpStatus.BAD_REQUEST);
+        }
+
         Subasta subasta = new Subasta();
-        subasta.setProducto(producto);
-        subasta.setVendedor(vendedor);
         subasta.setPrecioBase(request.getPrecioBase());
         subasta.setMontoActual(request.getPrecioBase());
         subasta.setIncrementoMinimo(request.getIncrementoMinimo());
         subasta.setFechaInicio(request.getFechaInicio());
         subasta.setFechaCierre(request.getFechaCierre());
         subasta.setDescripcion(request.getDescripcion());
+        subasta.setProducto(producto);
+        subasta.setVendedor(vendedor);
         subasta.setEstado(EstadoSubasta.BORRADOR);
 
-        subastaRepository.save(subasta);
+        Subasta guardada = subastaRepository.save(subasta);
+        registrarHistorialEstado(guardada, EstadoSubasta.BORRADOR, "Subasta creada en borrador", vendedor);
 
-        registrarHistorial(subasta, null, EstadoSubasta.BORRADOR, vendedor, "Creación de subasta");
-
-        return mapToResponse(subasta);
+        return mapToResponse(guardada);
     }
 
     @Override
     @Transactional
-    public SubastaResponse publicar(@NonNull Long userId, @NonNull Long subastaId) {
-        Subasta subasta = subastaRepository.findById(subastaId)
+    public SubastaResponse publicarSubasta(Long id, Long vendedorId) {
+        Subasta subasta = subastaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
-        if (!subasta.getVendedor().getId().equals(userId)) {
-            throw new BusinessException("Solo el vendedor puede publicar la subasta", HttpStatus.FORBIDDEN);
+        if (!subasta.getVendedor().getId().equals(vendedorId)) {
+            throw new BusinessException("subasta.no.autorizada", HttpStatus.FORBIDDEN);
         }
 
-        cambiarEstado(subasta, EstadoSubasta.PUBLICADA, subasta.getVendedor(), "Publicación de subasta");
+        if (subasta.getEstado() != EstadoSubasta.BORRADOR) {
+            throw new BusinessException("subasta.estado.invalido.publicar", HttpStatus.BAD_REQUEST);
+        }
 
-        return mapToResponse(subasta);
+        subasta.setEstado(EstadoSubasta.PUBLICADA);
+        Subasta actualizada = subastaRepository.save(subasta);
+        registrarHistorialEstado(actualizada, EstadoSubasta.PUBLICADA, "Subasta publicada", subasta.getVendedor());
+        return mapToResponse(actualizada);
     }
 
     @Override
     @Transactional
-    public SubastaResponse cancelar(@NonNull Long userId, @NonNull Long subastaId, String motivo) {
-        Subasta subasta = subastaRepository.findById(subastaId)
+    public SubastaResponse cancelarSubasta(Long id, Long vendedorId) {
+        Subasta subasta = subastaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
-        Usuario responsable = usuarioRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
-
-        // Solo el vendedor o un admin pueden cancelar
-        boolean esVendedor = subasta.getVendedor().getId().equals(userId);
-        boolean esAdmin = responsable.getRoles().stream()
-                .anyMatch(r -> r.getNombre().name().equals("ADMIN"));
-
-        if (!esVendedor && !esAdmin) {
-            throw new BusinessException("No tiene permisos para cancelar esta subasta", HttpStatus.FORBIDDEN);
+        if (!subasta.getVendedor().getId().equals(vendedorId)) {
+            throw new BusinessException("subasta.no.autorizada", HttpStatus.FORBIDDEN);
         }
 
-        EstadoSubasta estado = subasta.getEstado();
-        if (estado != EstadoSubasta.PUBLICADA && estado != EstadoSubasta.ACTIVA) {
-            throw new BusinessException("Solo se pueden cancelar subastas en estado PUBLICADA o ACTIVA",
-                    HttpStatus.BAD_REQUEST);
+        if (subasta.getPujas() != null && !subasta.getPujas().isEmpty()) {
+            throw new BusinessException("subasta.tiene.pujas", HttpStatus.BAD_REQUEST);
         }
 
-        cambiarEstado(subasta, EstadoSubasta.CANCELADA, responsable, motivo != null ? motivo : "Cancelación");
+        EstadoSubasta estadoActual = subasta.getEstado();
+        if (estadoActual != EstadoSubasta.BORRADOR && estadoActual != EstadoSubasta.PUBLICADA && estadoActual != EstadoSubasta.ACTIVA) {
+            throw new BusinessException("subasta.estado.invalido.cancelar", HttpStatus.BAD_REQUEST);
+        }
 
-        return mapToResponse(subasta);
+        subasta.setEstado(EstadoSubasta.CANCELADA);
+        Subasta actualizada = subastaRepository.save(subasta);
+        registrarHistorialEstado(actualizada, EstadoSubasta.CANCELADA, "Subasta cancelada por el vendedor", subasta.getVendedor());
+
+        return mapToResponse(actualizada);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SubastaResponse obtenerPorId(@NonNull Long subastaId) {
-        Subasta subasta = subastaRepository.findById(subastaId)
+    public SubastaResponse obtenerPorId(Long id) {
+        Subasta subasta = subastaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
-
         return mapToResponse(subasta);
     }
 
@@ -125,53 +129,63 @@ public class SubastaServiceImpl implements SubastaService {
                 pageable).map(this::mapToResponse);
     }
 
-    void cambiarEstado(Subasta subasta, EstadoSubasta nuevoEstado, Usuario responsable, String motivo) {
-        EstadoSubasta estadoAnterior = subasta.getEstado();
-        subasta.setEstado(nuevoEstado);
+    @Override
+    @Transactional
+    public void procesarCierresAutomaticos() {
+        Instant ahora = Instant.now();
 
-        registrarHistorial(subasta, estadoAnterior, nuevoEstado, responsable, motivo);
+        List<Subasta> aActivar = subastaRepository.findByEstadoAndFechaInicioBefore(EstadoSubasta.PUBLICADA, ahora);
+        for (Subasta subasta : aActivar) {
+            subasta.setEstado(EstadoSubasta.ACTIVA);
+            subastaRepository.save(subasta);
+            registrarHistorialEstado(subasta, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
+        }
 
-        eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), nuevoEstado));
+        List<Subasta> aCerrar = subastaRepository.findByEstadoAndFechaCierreBefore(EstadoSubasta.ACTIVA, ahora);
+        for (Subasta subasta : aCerrar) {
+            boolean tienePujas = subasta.getPujas() != null && !subasta.getPujas().isEmpty();
+            EstadoSubasta nuevoEstado = tienePujas ? EstadoSubasta.ADJUDICADA : EstadoSubasta.FINALIZADA;
+
+            subasta.setEstado(nuevoEstado);
+            if (tienePujas) {
+                subasta.setFechaAdjudicacion(ahora);
+            }
+            subastaRepository.save(subasta);
+
+            String motivo = tienePujas ? "Adjudicada automáticamente al vencer el tiempo" : "Finalizada automáticamente sin ofertas";
+            registrarHistorialEstado(subasta, nuevoEstado, motivo, null);
+        }
     }
 
-    private void registrarHistorial(Subasta subasta, EstadoSubasta anterior, EstadoSubasta nuevo,
-                                    Usuario responsable, String motivo) {
-        HistorialEstado historial = new HistorialEstado();
-        historial.setSubasta(subasta);
-        historial.setEstadoAnterior(anterior);
-        historial.setEstadoNuevo(nuevo);
-        historial.setUsuarioResponsable(responsable);
-        historial.setMotivo(motivo);
-
+    private void registrarHistorialEstado(Subasta subasta, EstadoSubasta nuevo, String motivo, Usuario responsable) {
+        HistorialEstado historial = HistorialEstado.builder()
+                .subasta(subasta)
+                .estadoAnterior(subasta.getEstado())
+                .estadoNuevo(nuevo)
+                .fecha(Instant.now())
+                .usuarioResponsable(responsable)
+                .motivo(motivo)
+                .build();
         historialEstadoRepository.save(historial);
     }
 
-    private SubastaResponse mapToResponse(Subasta s) {
-        SubastaResponse.SubastaResponseBuilder builder = SubastaResponse.builder()
-                .id(s.getId())
-                .precioBase(s.getPrecioBase())
-                .montoActual(s.getMontoActual())
-                .incrementoMinimo(s.getIncrementoMinimo())
-                .fechaInicio(s.getFechaInicio())
-                .fechaCierre(s.getFechaCierre())
-                .estado(s.getEstado())
-                .descripcion(s.getDescripcion())
-                .fechaAdjudicacion(s.getFechaAdjudicacion())
-                .productoId(s.getProducto().getId())
-                .productoNombre(s.getProducto().getNombre())
-                .vendedorId(s.getVendedor().getId())
-                .vendedorNombre(s.getVendedor().getNombre());
-
-        // Privacidad: ganador solo visible cuando la subasta terminó
-        if (s.getEstado() == EstadoSubasta.FINALIZADA
-                || s.getEstado() == EstadoSubasta.ADJUDICADA
-                || s.getEstado() == EstadoSubasta.EN_DISPUTA) {
-            if (s.getGanador() != null) {
-                builder.ganadorId(s.getGanador().getId());
-                builder.ganadorNombre(s.getGanador().getNombre());
-            }
-        }
-
-        return builder.build();
+    private SubastaResponse mapToResponse(Subasta subasta) {
+        return SubastaResponse.builder()
+                .id(subasta.getId())
+                .precioBase(subasta.getPrecioBase())
+                .montoActual(subasta.getMontoActual())
+                .incrementoMinimo(subasta.getIncrementoMinimo())
+                .fechaInicio(subasta.getFechaInicio())
+                .fechaCierre(subasta.getFechaCierre())
+                .estado(subasta.getEstado())
+                .descripcion(subasta.getDescripcion())
+                .fechaAdjudicacion(subasta.getFechaAdjudicacion())
+                .productoId(subasta.getProducto().getId())
+                .productoNombre(subasta.getProducto().getNombre())
+                .vendedorId(subasta.getVendedor().getId())
+                .vendedorNombre(subasta.getVendedor().getNombre())
+                .ganadorId(subasta.getGanador() != null ? subasta.getGanador().getId() : null)
+                .ganadorNombre(subasta.getGanador() != null ? subasta.getGanador().getNombre() : null)
+                .build();
     }
 }

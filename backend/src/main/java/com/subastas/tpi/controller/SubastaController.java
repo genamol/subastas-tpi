@@ -49,7 +49,7 @@ public class SubastaController {
     public ResponseEntity<SubastaResponse> crear(@Valid @RequestBody SubastaRequest request,
                                                   Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        SubastaResponse response = subastaService.crear(Objects.requireNonNull(userId), request);
+        SubastaResponse response = subastaService.crearSubasta(request, Objects.requireNonNull(userId));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -63,7 +63,7 @@ public class SubastaController {
     public ResponseEntity<SubastaResponse> publicar(@PathVariable Long id,
                                                      Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        SubastaResponse response = subastaService.publicar(Objects.requireNonNull(userId), Objects.requireNonNull(id));
+        SubastaResponse response = subastaService.publicarSubasta(Objects.requireNonNull(id), Objects.requireNonNull(userId));
         return ResponseEntity.ok(response);
     }
 
@@ -79,7 +79,7 @@ public class SubastaController {
                                                      @RequestParam(required = false) String motivo,
                                                      Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
-        SubastaResponse response = subastaService.cancelar(Objects.requireNonNull(userId), Objects.requireNonNull(id), motivo);
+        SubastaResponse response = subastaService.cancelarSubasta(Objects.requireNonNull(id), Objects.requireNonNull(userId));
         return ResponseEntity.ok(response);
     }
 
