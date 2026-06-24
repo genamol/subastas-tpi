@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Gavel } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubastas } from '../hooks/useSubastas';
+import { Spinner, CardSkeleton } from '../components/Spinner';
 import type { Auction } from '../types';
 
 function formatCountdown(endTime: string): { text: string; urgent: boolean; ended: boolean } {
@@ -93,8 +94,8 @@ export default function CatalogoPage() {
       </div>
 
       {loading && auctions.length === 0 ? (
-        <div className="py-20 text-center">
-          <span className="block text-text-muted text-sm">Cargando subastas...</span>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
       ) : filteredAuctions.length === 0 ? (
         <div className="py-20 text-center rounded-2xl border border-dashed border-border">

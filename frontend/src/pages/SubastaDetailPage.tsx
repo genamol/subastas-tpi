@@ -5,6 +5,7 @@ import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
 import * as subastaService from '../services/subastaService';
 import * as pujaService from '../services/pujaService';
+import { DetailSkeleton } from '../components/Spinner';
 import type { Auction, Bid } from '../types';
 
 const formatDate = (isoString: string) => {
@@ -95,7 +96,7 @@ export default function SubastaDetailPage() {
     }
   };
 
-  if (loading) return <div className="py-20 text-center text-text-muted text-sm">Cargando subasta...</div>;
+  if (loading) return <DetailSkeleton />;
   if (!auction) return <div className="py-20 text-center text-text-muted text-sm">Subasta no encontrada</div>;
 
   return (

@@ -5,6 +5,7 @@ import { useSse } from '../hooks/useSse';
 import { obtenerTicketAdmin } from '../services/sseService';
 import * as adminService from '../services/adminService';
 import api from '../services/api';
+import { Spinner } from '../components/Spinner';
 import type { Dispute, UserAccount, Auction } from '../types';
 
 export default function AdminPage() {
@@ -28,6 +29,8 @@ export default function AdminPage() {
     },
   });
 
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
   useEffect(() => {
     adminService.listarUsuarios().then(res => {
       setUsers(res.content.map((u: { id: number; nombre: string; email: string; bloqueado: boolean; roles: string[]; createdAt: string }) => ({
@@ -39,7 +42,8 @@ export default function AdminPage() {
         status: u.bloqueado ? 'BLOCKED' as const : 'ACTIVE' as const,
         createdAt: u.createdAt,
       })));
-    }).catch(() => {});
+      setLoadingUsers(false);
+    }).catch(() => { setLoadingUsers(false); });
   }, []);
 
   const handleResolveDispute = async (id: string, state: 'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA', resolution: string) => {
@@ -68,6 +72,7 @@ export default function AdminPage() {
 
   return (
     <div className="animate-fade-in">
+      {loadingUsers ? <Spinner /> : (
       <AdminPanel
         disputes={disputes}
         users={users}
@@ -76,6 +81,7 @@ export default function AdminPage() {
         onToggleUserStatus={handleToggleUserStatus}
         sseLogs={sseLogs}
       />
+      )}
     </div>
   );
 }
