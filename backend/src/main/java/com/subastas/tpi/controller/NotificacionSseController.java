@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import com.subastas.tpi.model.Usuario;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,9 +25,8 @@ public class NotificacionSseController {
 
     @Operation(summary = "Generar ticket efímero para el canal de notificaciones SSE")
     @PostMapping("/api/tickets/notificaciones")
-    public ResponseEntity<TicketResponse> generarTicket(Authentication auth) {
-        Long userId = (Long) auth.getPrincipal();
-        String ticket = ticketService.generarTicket(userId);
+    public ResponseEntity<TicketResponse> generarTicket(@AuthenticationPrincipal Usuario usuario) {
+        String ticket = ticketService.generarTicket(usuario.getId());
         return ResponseEntity.ok(new TicketResponse(ticket));
     }
 

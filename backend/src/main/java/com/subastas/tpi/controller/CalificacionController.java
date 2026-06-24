@@ -9,10 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import com.subastas.tpi.model.Usuario;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/calificaciones")
@@ -23,10 +22,9 @@ public class CalificacionController {
 
     @PostMapping
     public ResponseEntity<CalificacionResponse> calificar(@Valid @RequestBody CalificacionRequest request,
-                                                           Authentication auth) {
-        Long userId = (Long) auth.getPrincipal();
+                                                           @AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(calificacionService.calificar(Objects.requireNonNull(userId), request));
+                .body(calificacionService.calificar(usuario.getId(), request));
     }
 
     @GetMapping("/usuario/{id}")

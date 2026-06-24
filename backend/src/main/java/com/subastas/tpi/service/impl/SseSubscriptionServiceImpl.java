@@ -127,14 +127,6 @@ public class SseSubscriptionServiceImpl implements SseSubscriptionService {
 
     @Override
     public void removerPorUsuario(Long userId) {
-        // Cuando un admin bloquea a un usuario, se cierran sus conexiones
-        emisores.values().forEach(lista -> lista.forEach(emisor -> {
-            try {
-                emisor.completeWithError(new SecurityException("Usuario bloqueado"));
-            } catch (Exception ignored) {
-                // El emisor ya estaba cerrado
-            }
-        }));
         removerNotificacionesPorUsuario(userId);
     }
 
