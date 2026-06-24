@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Gavel } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -30,19 +31,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0A0A0C] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-main px-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500 text-[#0A0A0C] shadow-lg shadow-amber-500/10">
             <Gavel className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-100">
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-text-primary">
             <span className="font-display">UniSubastas</span>
           </h1>
-          <p className="mt-1 text-xs text-slate-500">Iniciá sesión para pujar</p>
+          <p className="mt-1 text-xs text-text-muted">Iniciá sesión para pujar</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-800 bg-[#0F0F13] p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-surface p-8 space-y-5">
           {error && (
             <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-400">
               {error}
@@ -60,7 +64,7 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-xs font-medium text-slate-400 mb-1.5">
+            <label htmlFor="email" className="block text-xs font-medium text-text-secondary mb-1.5">
               Email
             </label>
             <input
@@ -69,13 +73,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-[#121216] px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+              className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
               placeholder="usuario@email.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-xs font-medium text-slate-400 mb-1.5">
+            <label htmlFor="password" className="block text-xs font-medium text-text-secondary mb-1.5">
               Contraseña
             </label>
             <input
@@ -84,7 +88,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-[#121216] px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+              className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
               placeholder="••••••••"
             />
           </div>
@@ -97,17 +101,17 @@ export default function LoginPage() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
 
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-text-muted">
             ¿No tenés cuenta?{' '}
             <Link to="/register" className="font-medium text-amber-400 hover:text-amber-300 transition">
               Registrate
             </Link>
           </p>
 
-          <div className="pt-3 border-t border-slate-800">
+          <div className="pt-3 border-t border-border">
             <Link
               to="/demo"
-              className="block w-full rounded-xl border border-slate-800 bg-[#121216] py-2.5 text-center text-xs font-medium text-slate-500 hover:text-slate-300 hover:border-slate-700 transition"
+              className="block w-full rounded-xl border border-border bg-input py-2.5 text-center text-xs font-medium text-text-muted hover:text-text-primary hover:border-border transition"
             >
               Ver demo sin registrarse
             </Link>

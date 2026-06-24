@@ -76,39 +76,39 @@ export default function CrearSubastaPage({ categories, onCreateAuction, successM
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-[#0F0F13] border border-slate-800 p-6 rounded-2xl animate-fade-in">
+    <div className="max-w-xl mx-auto bg-surface border border-border p-6 rounded-2xl animate-fade-in">
       {successMessage && (
-        <div className="mb-4 flex items-center space-x-3 rounded-xl border border-emerald-500/20 bg-[#0A0A0C]/90 p-3 text-xs font-medium text-emerald-400 shadow-lg shadow-emerald-500/5">
+        <div className="mb-4 flex items-center space-x-3 rounded-xl border border-emerald-500/20 bg-main/90 p-3 text-xs font-medium text-emerald-400 shadow-lg shadow-emerald-500/5">
           <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
-      <div className="border-b border-slate-800 pb-3 mb-5">
-        <h3 className="font-display text-base font-bold text-slate-100 uppercase tracking-wider">Publicar Nuevo Artículo</h3>
-        <p className="text-[11px] text-slate-500">Crea el producto y regístralo como BORRADOR (luego cambia a PUBLICADA)</p>
+      <div className="border-b border-border pb-3 mb-5">
+        <h3 className="font-display text-base font-bold text-text-primary uppercase tracking-wider">Publicar Nuevo Artículo</h3>
+        <p className="text-[11px] text-text-muted">Crea el producto y regístralo como BORRADOR (luego cambia a PUBLICADA)</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         <div>
-          <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Título del Artículo:</label>
+          <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Título del Artículo:</label>
           <input
             type="text"
             required
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="w-full rounded-xl border border-slate-800 bg-[#121216] p-3 text-slate-200 placeholder-slate-600 focus:border-amber-500 focus:outline-none"
+            className="w-full rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none"
             placeholder="ej. iPhone 15 Pro Max impecable caja original"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
+            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-[#121216] p-3 text-slate-200 focus:border-amber-500 focus:outline-none"
+              className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none"
             >
               {categories.map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -117,13 +117,13 @@ export default function CrearSubastaPage({ categories, onCreateAuction, successM
           </div>
 
           <div>
-            <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Duración de la Subasta (Minutos):</label>
+            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Duración de la Subasta (Minutos):</label>
             <input
               type="number"
               required
               value={newDuration}
               onChange={(e) => setNewDuration(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-[#121216] p-3 text-slate-200 focus:border-amber-500 focus:outline-none font-mono"
+              className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none font-mono"
               placeholder="ej. 10"
               min="1"
             />
@@ -132,17 +132,17 @@ export default function CrearSubastaPage({ categories, onCreateAuction, successM
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Precio Base (ARS):</label>
+            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Precio Base (ARS):</label>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="text-slate-600">$</span>
+                <span className="text-text-muted">$</span>
               </div>
               <input
                 type="number"
                 required
                 value={newBasePrice}
                 onChange={(e) => setNewBasePrice(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-[#121216] py-3 pl-8 pr-3 text-slate-200 focus:border-amber-500 focus:outline-none font-mono"
+                className="w-full rounded-xl border border-border bg-input py-3 pl-8 pr-3 text-text-primary focus:border-amber-500 focus:outline-none font-mono"
                 placeholder="ej. 250"
                 min="1"
               />
@@ -150,17 +150,17 @@ export default function CrearSubastaPage({ categories, onCreateAuction, successM
           </div>
 
           <div>
-            <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Incremento Mínimo (ARS):</label>
+            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Incremento Mínimo (ARS):</label>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="text-slate-600">$</span>
+                <span className="text-text-muted">$</span>
               </div>
               <input
                 type="number"
                 required
                 value={newMinIncrement}
                 onChange={(e) => setNewMinIncrement(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-[#121216] py-3 pl-8 pr-3 text-slate-200 focus:border-amber-500 focus:outline-none font-mono"
+                className="w-full rounded-xl border border-border bg-input py-3 pl-8 pr-3 text-text-primary focus:border-amber-500 focus:outline-none font-mono"
                 placeholder="ej. 10"
                 min="1"
               />
@@ -169,20 +169,20 @@ export default function CrearSubastaPage({ categories, onCreateAuction, successM
         </div>
 
         <div>
-          <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Imagen del Producto:</label>
+          <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Imagen del Producto:</label>
           <div className="flex gap-2">
             <input
               type="url"
               value={newImage}
               onChange={(e) => setNewImage(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-800 bg-[#121216] p-3 text-slate-200 placeholder-slate-600 focus:border-amber-500 focus:outline-none"
+              className="flex-1 rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none"
               placeholder="https://... (URL) o subí un archivo"
             />
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-[#121216] px-4 py-3 text-xs font-medium text-slate-400 hover:text-amber-400 hover:border-amber-500/30 transition disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-input px-4 py-3 text-xs font-medium text-text-secondary hover:text-amber-400 hover:border-amber-500/30 transition disabled:opacity-50"
             >
               <Upload className="h-4 w-4" />
               <span>{uploading ? 'Subiendo...' : 'Archivo'}</span>
@@ -197,18 +197,18 @@ export default function CrearSubastaPage({ categories, onCreateAuction, successM
           </div>
           {uploadError && <p className="mt-1 text-[11px] text-rose-400">{uploadError}</p>}
           {newImage && (
-            <img src={newImage} alt="Vista previa" className="mt-2 h-24 rounded-xl object-cover border border-slate-800" />
+            <img src={newImage} alt="Vista previa" className="mt-2 h-24 rounded-xl object-cover border border-border" />
           )}
-          <p className="mt-1 text-[10px] text-slate-600">Máximo {MAX_SIZE_MB} MB. Formatos: JPG, PNG, WebP.</p>
+          <p className="mt-1 text-[10px] text-text-muted">Máximo {MAX_SIZE_MB} MB. Formatos: JPG, PNG, WebP.</p>
         </div>
 
         <div>
-          <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Descripción Detallada:</label>
+          <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Descripción Detallada:</label>
           <textarea
             required
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
-            className="w-full h-24 rounded-xl border border-slate-800 bg-[#121216] p-3 text-slate-200 placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed"
+            className="w-full h-24 rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed"
             placeholder="Describe las condiciones, detalles técnicos y procedencia del producto..."
           />
         </div>

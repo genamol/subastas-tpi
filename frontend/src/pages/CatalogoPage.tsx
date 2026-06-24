@@ -26,7 +26,7 @@ function CardCountdown({ endTime }: { endTime: string }) {
 
   if (info.ended) {
     return (
-      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-slate-900/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-slate-500 border border-slate-700/50">
+      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
         <Clock className="h-3.5 w-3.5" />
         Finalizada
       </div>
@@ -65,14 +65,14 @@ export default function CatalogoPage({ auctions, categories, onSelectAuction, on
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#0F0F13] p-4 rounded-2xl border border-slate-800">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border">
         <div className="relative w-full md:w-80">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar artículos (ej. MacBook, Fender)..."
-            className="w-full rounded-xl border border-slate-800 bg-[#121216] py-2 px-4 text-xs text-slate-200 placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="w-full rounded-xl border border-border bg-input py-2 px-4 text-xs text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
           />
         </div>
 
@@ -84,7 +84,7 @@ export default function CatalogoPage({ auctions, categories, onSelectAuction, on
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 selectedCategory === cat
                   ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/10'
-                  : 'bg-[#121216] border border-slate-800 text-slate-400 hover:text-slate-200'
+                  : 'bg-input border border-border text-text-secondary hover:text-text-primary'
               }`}
             >
               {cat}
@@ -94,8 +94,8 @@ export default function CatalogoPage({ auctions, categories, onSelectAuction, on
       </div>
 
       {filteredAuctions.length === 0 ? (
-        <div className="py-20 text-center rounded-2xl border border-dashed border-slate-800">
-          <span className="block text-slate-600 text-sm">No se encontraron subastas que coincidan con los filtros</span>
+        <div className="py-20 text-center rounded-2xl border border-dashed border-border">
+          <span className="block text-text-muted text-sm">No se encontraron subastas que coincidan con los filtros</span>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -105,15 +105,15 @@ export default function CatalogoPage({ auctions, categories, onSelectAuction, on
               className="cursor-pointer"
               onClick={() => onSelectAuction(auc)}
             >
-              <div className="relative group rounded-2xl border border-slate-800 bg-[#0F0F13] overflow-hidden hover:border-slate-700/80 transition-all duration-300">
-                <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-slate-200 backdrop-blur">
+              <div className="relative group rounded-2xl border border-border bg-surface overflow-hidden hover:border-border/80 transition-all duration-300">
+                <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-primary backdrop-blur">
                   <span className="text-amber-500 font-bold uppercase mr-1">
                     {new Date(auc.endTime).getTime() > Date.now() ? 'ACTIVA' : 'FINALIZADA'}
                   </span>
                   {auc.category}
                 </div>
 
-                <div className="aspect-video w-full overflow-hidden bg-slate-900/60 relative">
+                <div className="aspect-video w-full overflow-hidden bg-input/60 relative">
                   <img
                     src={auc.image}
                     alt={auc.title}
@@ -124,34 +124,34 @@ export default function CatalogoPage({ auctions, categories, onSelectAuction, on
                 </div>
 
                 <div className="p-4">
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+                  <div className="flex items-center justify-between text-[11px] text-text-muted mb-2">
                     <span>Vendedor: {auc.seller.name}</span>
                     <span className="text-amber-500">{auc.seller.rating} ★</span>
                   </div>
 
-                  <h3 className="font-display font-bold text-base text-slate-100 mb-2 line-clamp-1 group-hover:text-amber-400 transition-colors">
+                  <h3 className="font-display font-bold text-base text-text-primary mb-2 line-clamp-1 group-hover:text-amber-400 transition-colors">
                     {auc.title}
                   </h3>
 
-                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
+                  <p className="text-xs text-text-muted line-clamp-2 leading-relaxed mb-4">
                     {auc.description}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-2 border-t border-slate-800/60 pt-3 text-xs">
+                  <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-3 text-xs">
                     <div>
-                      <span className="block text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-0.5">Oferta Actual</span>
+                      <span className="block text-[9px] uppercase tracking-wider text-text-muted font-semibold mb-0.5">Oferta Actual</span>
                       <span className="font-mono text-base font-extrabold text-amber-500">
                         ${auc.currentPrice.toLocaleString('es-ES')}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="block text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-0.5">Pujas Realizadas</span>
-                      <span className="font-mono font-bold text-slate-300 block mt-0.5">{auc.bidsCount}</span>
+                      <span className="block text-[9px] uppercase tracking-wider text-text-muted font-semibold mb-0.5">Pujas Realizadas</span>
+                      <span className="font-mono font-bold text-text-primary block mt-0.5">{auc.bidsCount}</span>
                     </div>
                   </div>
 
                   <div className="mt-4 flex gap-2">
-                    <button className="flex-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 py-2.5 text-center text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer">
+                    <button className="flex-1 rounded-xl bg-input hover:bg-input border border-border py-2.5 text-center text-xs font-bold text-text-primary hover:text-white transition-colors cursor-pointer">
                       Ver Detalle
                     </button>
                     <button

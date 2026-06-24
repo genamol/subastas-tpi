@@ -1,5 +1,6 @@
 import { Gavel, Coins, Plus, Bell, User, LayoutDashboard, PlusCircle, Award } from 'lucide-react';
 import { UserProfile } from '../types';
+import ThemeToggle from './ThemeToggle';
 
 interface NavbarProps {
   currentTab: 'catalog' | 'my-bids' | 'create';
@@ -19,7 +20,7 @@ export default function Navbar({
   onToggleNotifications
 }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
         <div 
@@ -30,10 +31,10 @@ export default function Navbar({
             <Gavel className="h-5 w-5" />
           </div>
           <div>
-            <span className="font-display text-xl font-bold tracking-tight text-slate-900">
+            <span className="font-display text-xl font-bold tracking-tight text-text-primary">
               Uni<span className="text-indigo-600">Subastas</span>
             </span>
-            <span className="block text-[10px] font-medium uppercase tracking-wider text-slate-400">
+            <span className="block text-[10px] font-medium uppercase tracking-wider text-text-secondary">
               Proyecto Grupal
             </span>
           </div>
@@ -45,7 +46,7 @@ export default function Navbar({
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               currentTab === 'catalog'
                 ? 'bg-indigo-50 text-indigo-700'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                : 'text-text-muted hover:bg-input hover:text-text-primary'
             }`}
             id="tab-catalog"
           >
@@ -58,7 +59,7 @@ export default function Navbar({
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               currentTab === 'my-bids'
                 ? 'bg-indigo-50 text-indigo-700'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                : 'text-text-muted hover:bg-input hover:text-text-primary'
             }`}
             id="tab-my-bids"
           >
@@ -71,7 +72,7 @@ export default function Navbar({
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               currentTab === 'create'
                 ? 'bg-indigo-50 text-indigo-700'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                : 'text-text-muted hover:bg-input hover:text-text-primary'
             }`}
             id="tab-create"
           >
@@ -81,13 +82,13 @@ export default function Navbar({
         </nav>
 
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 rounded-xl border border-slate-200 bg-slate-50/50 py-1.5 pl-3 pr-2.5">
+          <div className="flex items-center space-x-2 rounded-xl border border-border bg-input/50 py-1.5 pl-3 pr-2.5">
             <Coins className="h-4 w-4 text-amber-500 animate-pulse-slow" />
             <div className="text-right">
-              <span className="block text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="block text-[9px] font-semibold uppercase tracking-wider text-text-secondary">
                 Saldo
               </span>
-              <span className="font-mono text-sm font-bold text-slate-700">
+              <span className="font-mono text-sm font-bold text-text-secondary">
                 ${user.balance.toLocaleString('es-ES', { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -101,7 +102,7 @@ export default function Navbar({
 
           <button
             onClick={onToggleNotifications}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface text-text-muted hover:bg-input hover:text-text-primary transition-colors"
           >
             <Bell className="h-5 w-5" />
             {unreadNotificationsCount > 0 && (
@@ -111,17 +112,18 @@ export default function Navbar({
             )}
           </button>
 
-          <div className="flex items-center space-x-2 border-l border-slate-200 pl-3">
+          <div className="flex items-center space-x-2 border-l border-border pl-3">
+            <ThemeToggle />
             <img
               src={user.avatar}
               alt={user.name}
               className="h-9 w-9 rounded-full object-cover ring-2 ring-indigo-100"
             />
             <div className="hidden lg:block text-left">
-              <span className="block text-xs font-semibold text-slate-800">
+              <span className="block text-xs font-semibold text-text-primary">
                 {user.name}
               </span>
-              <span className="block text-[10px] text-slate-500">
+              <span className="block text-[10px] text-text-muted">
                 Calificación: {user.rating} ★
               </span>
             </div>
@@ -130,11 +132,11 @@ export default function Navbar({
 
       </div>
 
-      <div className="flex md:hidden border-t border-slate-100 bg-white px-2 py-1 justify-around">
+      <div className="flex md:hidden border-t border-border bg-surface px-2 py-1 justify-around">
         <button
           onClick={() => onTabChange('catalog')}
           className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${
-            currentTab === 'catalog' ? 'text-indigo-600 font-medium' : 'text-slate-500'
+            currentTab === 'catalog' ? 'text-indigo-600 font-medium' : 'text-text-muted'
           }`}
         >
           <LayoutDashboard className="h-5 w-5 mb-0.5" />
@@ -143,7 +145,7 @@ export default function Navbar({
         <button
           onClick={() => onTabChange('my-bids')}
           className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${
-            currentTab === 'my-bids' ? 'text-indigo-600 font-medium' : 'text-slate-500'
+            currentTab === 'my-bids' ? 'text-indigo-600 font-medium' : 'text-text-muted'
           }`}
         >
           <Award className="h-5 w-5 mb-0.5" />
@@ -152,7 +154,7 @@ export default function Navbar({
         <button
           onClick={() => onTabChange('create')}
           className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${
-            currentTab === 'create' ? 'text-indigo-600 font-medium' : 'text-slate-500'
+            currentTab === 'create' ? 'text-indigo-600 font-medium' : 'text-text-muted'
           }`}
         >
           <PlusCircle className="h-5 w-5 mb-0.5" />
