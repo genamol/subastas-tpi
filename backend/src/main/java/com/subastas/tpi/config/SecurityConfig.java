@@ -46,6 +46,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/subastas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subastas/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
+                // Archivos publicos (fotos)
+                .requestMatchers("/uploads/**").permitAll()
                 // Admin
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Todo lo demás requiere autenticación
