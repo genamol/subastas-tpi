@@ -42,10 +42,11 @@ function CardCountdown({ endTime }: { endTime: string }) {
 const CATEGORIAS = ['Todos', 'Tecnología', 'Hogar', 'Vehículos', 'Deportes', 'Coleccionables', 'Herramientas'];
 
 export default function CatalogoPage() {
-  const { auctions, loading, pujar } = useSubastas();
+  const { auctions, loading, error, pujar } = useSubastas();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [bidError, setBidError] = useState<string | null>(null);
 
   const filteredAuctions = auctions.filter(a => {
     const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
@@ -61,11 +62,21 @@ export default function CatalogoPage() {
   const handleQuickBid = async (auctionId: string) => {
     const auction = auctions.find(a => a.id === auctionId);
     if (!auction) return;
-    await pujar(auctionId, auction.currentPrice + auction.minIncrement);
+    const result = await pujar(auctionId, auction.currentPrice + auction.minIncrement);
+    if (result.error) {
+      setBidError(result.error);
+      setTimeout(() => setBidError(null), 4000);
+    }
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {error && (
+        <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-400">{error}</div>
+      )}
+      {bidError && (
+        <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-400">{bidError}</div>
+      )}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border">
         <div className="relative w-full md:w-80">
           <input

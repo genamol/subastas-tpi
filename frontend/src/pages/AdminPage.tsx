@@ -9,7 +9,7 @@ import { Spinner } from '../components/Spinner';
 import type { Dispute, UserAccount, Auction } from '../types';
 
 export default function AdminPage() {
-  const { auctions, pujar } = useSubastas();
+  const { auctions } = useSubastas();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [sseLogs, setSseLogs] = useState<string[]>([]);

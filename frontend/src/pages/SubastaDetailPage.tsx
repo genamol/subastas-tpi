@@ -80,8 +80,13 @@ export default function SubastaDetailPage() {
       const bid = await pujaService.registrarPuja(id, amount);
       setAuction(prev => prev ? { ...prev, currentPrice: amount, bidsCount: prev.bidsCount + 1, bids: [bid, ...prev.bids] } : prev);
       setBidAmount('');
-    } catch {
-      setBidError('Error al registrar la puja');
+    } catch (err: unknown) {
+      if (err instanceof Error && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+        setBidError(axiosErr.response?.data?.mensaje ?? 'Error al registrar la puja');
+      } else {
+        setBidError('Error de conexión al registrar la puja');
+      }
     }
   };
 
@@ -91,8 +96,13 @@ export default function SubastaDetailPage() {
     try {
       const bid = await pujaService.registrarPuja(id, amount);
       setAuction(prev => prev ? { ...prev, currentPrice: amount, bidsCount: prev.bidsCount + 1, bids: [bid, ...prev.bids] } : prev);
-    } catch {
-      setBidError('Error al registrar la puja');
+    } catch (err: unknown) {
+      if (err instanceof Error && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+        setBidError(axiosErr.response?.data?.mensaje ?? 'Error al registrar la puja');
+      } else {
+        setBidError('Error de conexión');
+      }
     }
   };
 
