@@ -2,6 +2,8 @@ package com.subastas.tpi.service.impl;
 
 import com.subastas.tpi.dto.request.PujaRequest;
 import com.subastas.tpi.dto.response.PujaResponse;
+import com.subastas.tpi.dto.response.PujaSseDto;
+import com.subastas.tpi.event.NuevaPujaEvent;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.Puja;
 import com.subastas.tpi.model.Subasta;
@@ -12,6 +14,7 @@ import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.service.PujaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,6 +30,7 @@ public class PujaServiceImpl implements PujaService {
     private final PujaRepository pujaRepository;
     private final SubastaRepository subastaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -79,6 +83,14 @@ public class PujaServiceImpl implements PujaService {
         subasta.setMontoActual(request.getMonto());
         subasta.setGanador(ofertante);
         subastaRepository.save(subasta);
+
+        PujaSseDto sseDto = PujaSseDto.builder()
+            .subastaId(subasta.getId())
+            .monto(puja.getMonto())
+            .montoActual(subasta.getMontoActual())
+            .fechaPuja(puja.getFechaPuja())
+            .build();
+        eventPublisher.publishEvent(new NuevaPujaEvent(subasta.getId(), sseDto, ofertanteId, ofertante.getNombre()));
 
         return mapToResponse(puja, true);
     }

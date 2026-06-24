@@ -2,6 +2,7 @@ package com.subastas.tpi.controller;
 
 import com.subastas.tpi.dto.request.CalificacionRequest;
 import com.subastas.tpi.dto.response.CalificacionResponse;
+import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.service.CalificacionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import com.subastas.tpi.model.Usuario;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
