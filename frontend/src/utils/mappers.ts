@@ -1,0 +1,64 @@
+import type { Auction, Bid, Notification, Dispute, Seller } from '../types';
+import type { SubastaBackend, PujaBackend, NotificacionBackend, PaginatedResponse } from './backendTypes';
+
+export function mapSubastaToAuction(subasta: SubastaBackend): Auction {
+  return {
+    id: String(subasta.id),
+    title: subasta.productoNombre,
+    description: subasta.descripcion ?? '',
+    category: '',
+    image: '',
+    startingPrice: subasta.precioBase,
+    currentPrice: subasta.montoActual,
+    minIncrement: subasta.incrementoMinimo,
+    bidsCount: 0,
+    endTime: subasta.fechaCierre,
+    createdAt: subasta.fechaInicio,
+    seller: {
+      name: subasta.vendedorNombre,
+      rating: 0,
+      avatar: '',
+    } as Seller,
+    bids: [],
+    status: mapEstadoToStatus(subasta.estado),
+  };
+}
+
+export function mapPujaToBid(puja: PujaBackend): Bid {
+  return {
+    id: String(puja.id),
+    auctionId: String(puja.subastaId),
+    bidderName: '',
+    bidderAvatar: '',
+    amount: puja.monto,
+    time: puja.fechaPuja,
+  };
+}
+
+export function mapNotificacionToNotification(n: NotificacionBackend): Notification {
+  return {
+    id: String(n.id),
+    type: 'info',
+    title: 'Notificación',
+    message: n.mensaje,
+    time: n.fechaCreacion,
+    read: n.leida,
+  };
+}
+
+export function mapEstadoToStatus(estado: string): Auction['status'] {
+  if (estado === 'ACTIVA') return 'active';
+  return 'finished';
+}
+
+export function mapPageToPaginated<T, U>(
+  page: PaginatedResponse<T>,
+  mapper: (item: T) => U
+): { items: U[]; totalPages: number; totalElements: number; page: number } {
+  return {
+    items: page.content.map(mapper),
+    totalPages: page.totalPages,
+    totalElements: page.totalElements,
+    page: page.number,
+  };
+}
