@@ -63,7 +63,7 @@ public class SubastaServiceImpl implements SubastaService {
         subasta.setEstado(EstadoSubasta.BORRADOR);
 
         Subasta guardada = subastaRepository.save(subasta);
-        registrarHistorialEstado(guardada, EstadoSubasta.BORRADOR, "Subasta creada en borrador", vendedor);
+        registrarHistorialEstado(guardada, null, EstadoSubasta.BORRADOR, "Subasta creada en borrador", vendedor);
 
         return mapToResponse(guardada);
     }
@@ -82,9 +82,10 @@ public class SubastaServiceImpl implements SubastaService {
             throw new BusinessException("subasta.estado.invalido.publicar", HttpStatus.BAD_REQUEST);
         }
 
+        EstadoSubasta estadoAnterior = subasta.getEstado();
         subasta.setEstado(EstadoSubasta.PUBLICADA);
         Subasta actualizada = subastaRepository.save(subasta);
-        registrarHistorialEstado(actualizada, EstadoSubasta.PUBLICADA, "Subasta publicada", subasta.getVendedor());
+        registrarHistorialEstado(actualizada, estadoAnterior, EstadoSubasta.PUBLICADA, "Subasta publicada", subasta.getVendedor());
         return mapToResponse(actualizada);
     }
 
@@ -109,7 +110,28 @@ public class SubastaServiceImpl implements SubastaService {
 
         subasta.setEstado(EstadoSubasta.CANCELADA);
         Subasta actualizada = subastaRepository.save(subasta);
-        registrarHistorialEstado(actualizada, EstadoSubasta.CANCELADA, "Subasta cancelada por el vendedor", subasta.getVendedor());
+        registrarHistorialEstado(actualizada, estadoActual, EstadoSubasta.CANCELADA, "Subasta cancelada por el vendedor", subasta.getVendedor());
+
+        return mapToResponse(actualizada);
+    }
+
+    @Override
+    @Transactional
+    public SubastaResponse cancelarSubastaAdmin(Long id, Long adminId) {
+        Subasta subasta = subastaRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
+
+        EstadoSubasta estadoActual = subasta.getEstado();
+        if (estadoActual == EstadoSubasta.FINALIZADA || estadoActual == EstadoSubasta.CANCELADA) {
+            throw new BusinessException("subasta.estado.invalido.cancelar", HttpStatus.BAD_REQUEST);
+        }
+
+        Usuario admin = usuarioRepository.findById(adminId)
+                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+
+        subasta.setEstado(EstadoSubasta.CANCELADA);
+        Subasta actualizada = subastaRepository.save(subasta);
+        registrarHistorialEstado(actualizada, estadoActual, EstadoSubasta.CANCELADA, "Cancelada por administrador", admin);
 
         return mapToResponse(actualizada);
     }
@@ -138,14 +160,16 @@ public class SubastaServiceImpl implements SubastaService {
 
         List<Subasta> aActivar = subastaRepository.findByEstadoAndFechaInicioBefore(EstadoSubasta.PUBLICADA, ahora);
         for (Subasta subasta : aActivar) {
+            EstadoSubasta anterior = subasta.getEstado();
             subasta.setEstado(EstadoSubasta.ACTIVA);
             subastaRepository.save(subasta);
-            registrarHistorialEstado(subasta, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
+            registrarHistorialEstado(subasta, anterior, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
         }
 
         List<Subasta> aCerrar = subastaRepository.findByEstadoAndFechaCierreBefore(EstadoSubasta.ACTIVA, ahora);
         for (Subasta subasta : aCerrar) {
             boolean tienePujas = subasta.getPujas() != null && !subasta.getPujas().isEmpty();
+            EstadoSubasta anterior = subasta.getEstado();
             EstadoSubasta nuevoEstado = tienePujas ? EstadoSubasta.ADJUDICADA : EstadoSubasta.FINALIZADA;
 
             subasta.setEstado(nuevoEstado);
@@ -155,14 +179,15 @@ public class SubastaServiceImpl implements SubastaService {
             subastaRepository.save(subasta);
 
             String motivo = tienePujas ? "Adjudicada automáticamente al vencer el tiempo" : "Finalizada automáticamente sin ofertas";
-            registrarHistorialEstado(subasta, nuevoEstado, motivo, null);
+            registrarHistorialEstado(subasta, anterior, nuevoEstado, motivo, null);
         }
     }
 
-    private void registrarHistorialEstado(Subasta subasta, EstadoSubasta nuevo, String motivo, Usuario responsable) {
+    private void registrarHistorialEstado(Subasta subasta, EstadoSubasta anterior, EstadoSubasta nuevo,
+                                           String motivo, Usuario responsable) {
         HistorialEstado historial = HistorialEstado.builder()
                 .subasta(subasta)
-                .estadoAnterior(subasta.getEstado())
+                .estadoAnterior(anterior)
                 .estadoNuevo(nuevo)
                 .fecha(Instant.now())
                 .usuarioResponsable(responsable)

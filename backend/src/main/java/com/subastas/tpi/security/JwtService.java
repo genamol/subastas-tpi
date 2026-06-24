@@ -1,79 +1,84 @@
 package com.subastas.tpi.security;
 
+import com.subastas.tpi.model.Usuario;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
-    private final SecretKey secretKey;
-    private final long accessExpiration;
-    private final long refreshExpiration;
+    @Value("${jwt.secret-key}")
+    private String secretKey;
 
-    public JwtService(
-            @Value("${jwt.secret-key}") String secret,
-            @Value("${jwt.access-expiration}") long accessExpiration,
-            @Value("${jwt.refresh-expiration}") long refreshExpiration) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.accessExpiration = accessExpiration;
-        this.refreshExpiration = refreshExpiration;
-    }
+    @Value("${jwt.access-expiration}")
+    private long accessExpiration;
 
-    public String generateAccessToken(Long userId, String email, List<String> roles) {
-        Instant now = Instant.now();
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    public String generarAccessToken(Usuario usuario) {
+        List<String> roles = usuario.getRoles().stream()
+            .map(r -> r.getNombre().name())
+            .collect(Collectors.toList());
+
         return Jwts.builder()
-                .subject(userId.toString())
-                .claim("email", email)
-                .claim("roles", roles)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusMillis(accessExpiration)))
-                .signWith(secretKey)
-                .compact();
+            .subject(String.valueOf(usuario.getId()))
+            .claim("email", usuario.getEmail())
+            .claim("roles", roles)
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + accessExpiration))
+            .signWith(getKey())
+            .compact();
     }
 
-    public String generateRefreshToken(Long userId) {
-        Instant now = Instant.now();
+    public String generarRefreshToken(Usuario usuario) {
         return Jwts.builder()
-                .subject(userId.toString())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusMillis(refreshExpiration)))
-                .signWith(secretKey)
-                .compact();
+            .subject(String.valueOf(usuario.getId()))
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+            .signWith(getKey())
+            .compact();
     }
 
-    // Validacion, sin tocar la base de datos
-    public Claims validateToken(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-    // Extrae el userId del subject, asumiendo que el token ya fue validado
-    @SuppressWarnings("null")
-    public @NonNull Long extractUserId(String token) {
-        // El subject siempre existe porque el token ya fue validado
-        Long id = Long.valueOf(validateToken(token).getSubject());
-        return id;
-    }
-
-    public boolean isTokenValid(String token) {
+    public boolean esValido(String token) {
         try {
-            validateToken(token);
+            getClaims(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (Exception e) {
             return false;
         }
+    }
+
+    public Long extraerUserId(String token) {
+        return Long.parseLong(getClaims(token).getSubject());
+    }
+
+    public String extraerEmail(String token) {
+        return getClaims(token).get("email", String.class);
+    }
+
+    public Date extraerExpiracion(String token) {
+        return getClaims(token).getExpiration();
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+            .verifyWith(getKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
+    }
+
+    private SecretKey getKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 }

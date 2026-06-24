@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginRequest {
 
-    @NotBlank(message = "{login.email.requerido}")
-    @Email(message = "{login.email.invalido}")
+    @NotBlank(message = "El email no puede estar vacío")
+    @Email(message = "El email no tiene un formato válido")
     private String email;
 
-    @NotBlank(message = "{login.password.requerido}")
+    @NotBlank(message = "La contraseña no puede estar vacía")
     private String password;
 }

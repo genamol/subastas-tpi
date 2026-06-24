@@ -1,23 +1,24 @@
 package com.subastas.tpi.dto.response;
 
-import com.subastas.tpi.model.enums.TipoNotificacion;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificacionResponse {
+public class UsuarioResponse {
 
     private Long id;
-    private String mensaje;
-    private TipoNotificacion tipo;
-    private boolean leida;
-    private Instant fechaCreacion;
-    private Long subastaId;
+    private String nombre;
+    private String email;
+    private String telefono;
+    private boolean bloqueado;
+    private Instant createdAt;
+    private List<String> roles;
 }

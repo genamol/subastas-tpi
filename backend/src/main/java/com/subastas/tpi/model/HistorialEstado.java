@@ -20,7 +20,7 @@ public class HistorialEstado {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private EstadoSubasta estadoAnterior;
 
     @Enumerated(EnumType.STRING)

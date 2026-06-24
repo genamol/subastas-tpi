@@ -1,28 +1,18 @@
 package com.subastas.tpi.controller;
 
 import com.subastas.tpi.dto.request.PujaRequest;
-import com.subastas.tpi.dto.response.ErrorResponse;
 import com.subastas.tpi.dto.response.PujaResponse;
+import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.service.PujaService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Objects;
-
-@Tag(name = "Pujas", description = "Registro de pujas en subastas activas")
 @RestController
 @RequestMapping("/api/pujas")
 @RequiredArgsConstructor
@@ -30,20 +20,25 @@ public class PujaController {
 
     private final PujaService pujaService;
 
-    @Operation(summary = "Registrar una nueva puja en una subasta activa")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Puja registrada exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Subasta no activa, expirada o monto insuficiente",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Subasta no encontrada",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "429", description = "Rate limit excedido (30 pujas/minuto)")
-    })
     @PostMapping
-    public ResponseEntity<PujaResponse> pujar(@Valid @RequestBody PujaRequest request,
-                                              Authentication auth) {
-        Long userId = (Long) auth.getPrincipal();
-        PujaResponse response = pujaService.pujar(Objects.requireNonNull(userId), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<PujaResponse> registrar(@Valid @RequestBody PujaRequest request,
+                                                   @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(pujaService.registrarPuja(request, usuario.getId()));
+    }
+
+    @GetMapping("/mis-pujas")
+    public ResponseEntity<Page<PujaResponse>> misPujas(@AuthenticationPrincipal Usuario usuario,
+                                                        Pageable pageable) {
+        return ResponseEntity.ok(pujaService.obtenerMisPujas(usuario.getId(), pageable));
+    }
+
+    @GetMapping("/subasta/{subastaId}")
+    public ResponseEntity<Page<PujaResponse>> porSubasta(@PathVariable Long subastaId,
+                                                          @AuthenticationPrincipal Usuario usuario,
+                                                          Pageable pageable) {
+        boolean esAdmin = usuario.getRoles().stream()
+            .anyMatch(r -> r.getNombre().name().equals("ADMIN"));
+        return ResponseEntity.ok(pujaService.obtenerPujasPorSubasta(subastaId, usuario.getId(), esAdmin, pageable));
     }
 }

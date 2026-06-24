@@ -12,6 +12,5 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
 
     private String accessToken;
-    private String email;
-    private String nombre;
+    private String tipo = "Bearer";
 }

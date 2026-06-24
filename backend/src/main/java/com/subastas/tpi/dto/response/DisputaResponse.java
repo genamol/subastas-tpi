@@ -1,6 +1,6 @@
 package com.subastas.tpi.dto.response;
 
-import com.subastas.tpi.model.enums.TipoNotificacion;
+import com.subastas.tpi.model.enums.TipoConflicto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,12 +12,15 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificacionResponse {
+public class DisputaResponse {
 
     private Long id;
-    private String mensaje;
-    private TipoNotificacion tipo;
-    private boolean leida;
+    private TipoConflicto tipo;
+    private String descripcion;
+    private String resolucionAdmin;
     private Instant fechaCreacion;
+    private Instant fechaResolucion;
     private Long subastaId;
+    private Long iniciadorId;
+    private String iniciadorNombre;
 }

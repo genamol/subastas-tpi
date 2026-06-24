@@ -18,6 +18,7 @@ public class PujaResponse {
     private BigDecimal monto;
     private Instant fechaPuja;
     private Long subastaId;
-    private BigDecimal montoActual;
-    // ofertanteId no se expone al usuario normal (privacidad de pujas)
+    // ofertante solo visible para el propio usuario, vendedor (post-cierre) y ADMIN
+    private Long ofertanteId;
+    private String ofertanteNombre;
 }

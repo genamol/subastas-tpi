@@ -1,15 +1,17 @@
 package com.subastas.tpi.service;
 
+import com.subastas.tpi.dto.response.NotificacionResponse;
 import com.subastas.tpi.model.Notificacion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 
 public interface NotificacionService {
 
-    Notificacion notificarVendedorNuevaPuja(@NonNull Long subastaId);
+    Page<NotificacionResponse> obtenerMisNotificaciones(Long usuarioId, Pageable pageable);
 
-    Page<Notificacion> listarPorUsuario(@NonNull Long userId, Pageable pageable);
+    void marcarComoLeida(Long notificacionId, Long usuarioId);
 
-    void marcarComoLeida(@NonNull Long notificacionId, @NonNull Long userId);
+    long contarNoLeidas(Long usuarioId);
+
+    Notificacion notificarVendedorNuevaPuja(Long subastaId);
 }

@@ -89,8 +89,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String auth = request.getHeader("Authorization");
         if (auth != null && auth.startsWith("Bearer ")) {
             String token = auth.substring(7);
-            if (jwtService.isTokenValid(token)) {
-                return "user:" + jwtService.extractUserId(token);
+            if (jwtService.esValido(token)) {
+                return "user:" + jwtService.extraerUserId(token);
             }
         }
         return "ip:" + request.getRemoteAddr();

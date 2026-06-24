@@ -48,7 +48,6 @@ public class SseEventListener {
                 .tipo(n.getTipo())
                 .leida(n.isLeida())
                 .fechaCreacion(n.getFechaCreacion())
-                .destinatarioId(n.getDestinatario().getId())
                 .subastaId(n.getSubasta() != null ? n.getSubasta().getId() : null)
                 .build();
 

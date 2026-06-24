@@ -31,4 +31,3 @@ public class SubastaResponse {
     private Long ganadorId;
     private String ganadorNombre;
 }
-

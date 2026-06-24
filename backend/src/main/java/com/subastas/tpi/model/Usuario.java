@@ -28,6 +28,9 @@ public class Usuario {
     private String password;
 
     @Column(nullable = false)
+    private String telefono;
+
+    @Column(nullable = false)
     private boolean bloqueado = false;
 
     @Column(nullable = false, updatable = false)
