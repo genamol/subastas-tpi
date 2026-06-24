@@ -11,6 +11,6 @@ export async function obtenerTicketNotificaciones(): Promise<string> {
 }
 
 export async function obtenerTicketAdmin(): Promise<string> {
-  const { data } = await api.post<{ ticket: string }>('/api/tickets/admin');
+  const { data } = await api.post<{ ticket: string }>('/api/admin/tickets');
   return data.ticket;
 }

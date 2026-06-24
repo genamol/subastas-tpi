@@ -46,9 +46,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/subastas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subastas/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
-                // Archivos publicos (fotos)
+                // Archivos públicos (fotos)
                 .requestMatchers("/uploads/**").permitAll()
-                // Admin
+                // SSE streams (usan ticket, no JWT)
+                .requestMatchers(HttpMethod.GET, "/api/notificaciones/stream").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/subastas/*/stream").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/admin/subastas/stream").permitAll()
+                // Admin (resto requiere JWT + rol)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()

@@ -1,13 +1,18 @@
 package com.subastas.tpi.controller;
 
+import com.subastas.tpi.dto.response.TicketResponse;
+import com.subastas.tpi.security.TicketService;
 import com.subastas.tpi.service.SseSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -18,12 +23,21 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class AdminSseController {
 
     private final SseSubscriptionService sseService;
+    private final TicketService ticketService;
 
-    @Operation(summary = "Canal SSE global del admin. Recibe todas las pujas y cambios de estado en tiempo real.")
+    @Operation(summary = "Generar ticket efímero para el canal SSE del admin")
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/subastas/stream")
-    public SseEmitter streamAdmin(Authentication auth) {
+    @PostMapping("/tickets")
+    public ResponseEntity<TicketResponse> generarTicket(Authentication auth) {
         Long adminId = (Long) auth.getPrincipal();
+        String ticket = ticketService.generarTicket(adminId);
+        return ResponseEntity.ok(new TicketResponse(ticket));
+    }
+
+    @Operation(summary = "Canal SSE global del admin. Requiere ticket como query param.")
+    @GetMapping("/subastas/stream")
+    public SseEmitter streamAdmin(@RequestParam String ticket) {
+        Long adminId = ticketService.validarYConsumir(ticket);
         return sseService.suscribirAdmin(adminId);
     }
 }

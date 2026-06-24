@@ -8,6 +8,8 @@ import com.subastas.tpi.repository.NotificacionRepository;
 import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.service.NotificacionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -33,5 +35,25 @@ public class NotificacionServiceImpl implements NotificacionService {
         notificacion.setSubasta(subasta);
 
         return notificacionRepository.save(notificacion);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Notificacion> listarPorUsuario(@NonNull Long userId, Pageable pageable) {
+        return notificacionRepository.findByDestinatarioIdOrderByFechaCreacionDesc(userId, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void marcarComoLeida(@NonNull Long notificacionId, @NonNull Long userId) {
+        Notificacion notificacion = notificacionRepository.findById(notificacionId)
+                .orElseThrow(() -> new BusinessException("notificacion.no.encontrada", HttpStatus.NOT_FOUND));
+
+        if (!notificacion.getDestinatario().getId().equals(userId)) {
+            throw new BusinessException("notificacion.no.autorizada", HttpStatus.FORBIDDEN);
+        }
+
+        notificacion.setLeida(true);
+        notificacionRepository.save(notificacion);
     }
 }
