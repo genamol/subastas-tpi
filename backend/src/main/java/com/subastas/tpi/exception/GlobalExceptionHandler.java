@@ -1,6 +1,8 @@
 package com.subastas.tpi.exception;
 
 import com.subastas.tpi.dto.response.ErrorResponse;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +18,20 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final MessageSource messageSource;
+
+    public GlobalExceptionHandler(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
         HttpStatusCode status = ex.getStatus();
+        String mensaje = messageSource.getMessage(ex.getMessage(), null, ex.getMessage(), LocaleContextHolder.getLocale());
         return ResponseEntity.status(status)
                 .body(ErrorResponse.builder()
                         .status(status.value())
-                        .mensaje(ex.getMessage())
+                        .mensaje(mensaje)
                         .timestamp(Instant.now())
                         .build());
     }

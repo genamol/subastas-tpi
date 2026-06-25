@@ -6,9 +6,9 @@ import lombok.Data;
 @Data
 public class ActualizarPerfilRequest {
 
-    @NotBlank(message = "El nombre es obligatorio")
+    @NotBlank(message = "{usuario.nombre.requerido}")
     private String nombre;
 
-    @NotBlank(message = "El teléfono es obligatorio")
+    @NotBlank(message = "{usuario.telefono.requerido}")
     private String telefono;
 }

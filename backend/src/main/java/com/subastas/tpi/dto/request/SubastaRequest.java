@@ -17,23 +17,23 @@ import java.time.Instant;
 @AllArgsConstructor
 public class SubastaRequest {
 
-    @NotNull(message = "El producto a subastar es obligatorio")
+    @NotNull(message = "{subasta.productoId.requerido}")
     private Long productoId;
 
-    @NotNull(message = "El precio base es obligatorio")
-    @DecimalMin(value = "0.01", message = "El precio base debe ser mayor a 0")
+    @NotNull(message = "{subasta.precioBase.requerido}")
+    @DecimalMin(value = "0.01", message = "{subasta.precioBase.minimo}")
     private BigDecimal precioBase;
 
-    @NotNull(message = "El incremento mínimo es obligatorio")
-    @DecimalMin(value = "0.01", message = "El incremento mínimo debe ser mayor a 0")
+    @NotNull(message = "{subasta.incrementoMinimo.requerido}")
+    @DecimalMin(value = "0.01", message = "{subasta.incrementoMinimo.minimo}")
     private BigDecimal incrementoMinimo;
 
-    @NotNull(message = "La fecha de inicio es obligatoria")
-    @Future(message = "La fecha de inicio debe ser en el futuro")
+    @NotNull(message = "{subasta.fechaInicio.requerida}")
+    @Future(message = "{subasta.fechaInicio.futuro}")
     private Instant fechaInicio;
 
-    @NotNull(message = "La fecha de cierre es obligatoria")
-    @Future(message = "La fecha de cierre debe ser en el futuro")
+    @NotNull(message = "{subasta.fechaCierre.requerida}")
+    @Future(message = "{subasta.fechaCierre.futuro}")
     private Instant fechaCierre;
 
     private String descripcion;
