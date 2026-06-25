@@ -10,6 +10,11 @@ const MAX_SIZE_MB = 5;
 
 interface Categoria { id: number; nombre: string; }
 
+function formatForInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function CrearSubastaPage() {
   const navigate = useNavigate();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -19,19 +24,17 @@ export default function CrearSubastaPage() {
   const [newBasePrice, setNewBasePrice] = useState('');
   const [newMinIncrement, setNewMinIncrement] = useState('');
   const [newDescription, setNewDescription] = useState('');
-<<<<<<< HEAD
-  const [newDuration, setNewDuration] = useState('10');
-=======
   const [iniciarAhora, setIniciarAhora] = useState(true);
   const [fechaInicio, setFechaInicio] = useState(() => formatForInput(new Date(Date.now() + 5 * 60 * 1000)));
   const [fechaCierre, setFechaCierre] = useState(() => formatForInput(new Date(Date.now() + 60 * 60 * 1000)));
->>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const minFechaInicio = formatForInput(new Date(Date.now() + 2 * 60 * 1000));
 
   useEffect(() => {
     api.get<Categoria[]>('/api/categorias').then(({ data }) => {
@@ -60,8 +63,6 @@ export default function CrearSubastaPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-<<<<<<< HEAD
-=======
 
     const inicioDate = iniciarAhora ? new Date(Date.now() + 5000) : new Date(fechaInicio);
     const cierreDate = new Date(fechaCierre);
@@ -71,12 +72,8 @@ export default function CrearSubastaPage() {
       return;
     }
 
->>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
     setSubmitting(true);
     try {
-      const duracionMs = parseFloat(newDuration) * 60 * 1000;
-      const ahora = new Date(Date.now() + 60000).toISOString();
-      const cierre = new Date(Date.now() + duracionMs).toISOString();
       const producto = await productoService.crearProducto({
         nombre: newTitle,
         descripcion: newDescription,
@@ -88,15 +85,16 @@ export default function CrearSubastaPage() {
         productoId: producto.id,
         precioBase: parseFloat(newBasePrice),
         incrementoMinimo: parseFloat(newMinIncrement),
-        fechaInicio: ahora,
-        fechaCierre: cierre,
+        fechaInicio: inicioDate.toISOString(),
+        fechaCierre: cierreDate.toISOString(),
         descripcion: newDescription,
       });
+
       setSuccess(true);
       setNewTitle(''); setNewBasePrice(''); setNewMinIncrement(''); setNewDescription(''); setNewImage('');
       setTimeout(() => { setSuccess(false); navigate('/catalogo'); }, 2000);
     } catch {
-      setError('Error al crear la subasta');
+      setError('Error al crear la subasta. Verificá los datos e intentá de nuevo.');
     } finally {
       setSubmitting(false);
     }
@@ -121,14 +119,6 @@ export default function CrearSubastaPage() {
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Título del Artículo:</label>
           <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none" placeholder="ej. iPhone 15 Pro Max impecable caja original" />
         </div>
-<<<<<<< HEAD
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
-            <select value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
-              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
-=======
 
         <div>
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
@@ -147,7 +137,6 @@ export default function CrearSubastaPage() {
             >
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${iniciarAhora ? 'translate-x-4' : 'translate-x-1'}`} />
             </button>
->>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
           </div>
 
           {!iniciarAhora && (
@@ -165,10 +154,6 @@ export default function CrearSubastaPage() {
           )}
 
           <div>
-<<<<<<< HEAD
-            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Duración (Minutos):</label>
-            <input type="number" required value={newDuration} onChange={(e) => setNewDuration(e.target.value)} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none font-mono" placeholder="10" min="1" />
-=======
             <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Cierre:</label>
             <input
               type="datetime-local"
@@ -178,9 +163,9 @@ export default function CrearSubastaPage() {
               onChange={(e) => setFechaCierre(e.target.value)}
               className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none"
             />
->>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Precio Base (ARS):</label>
@@ -197,6 +182,7 @@ export default function CrearSubastaPage() {
             </div>
           </div>
         </div>
+
         <div>
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Imagen del Producto:</label>
           <div className="flex gap-2">
@@ -210,10 +196,12 @@ export default function CrearSubastaPage() {
           {newImage && <img src={newImage} alt="Vista previa" className="mt-2 h-24 rounded-xl object-cover border border-border" />}
           <p className="mt-1 text-[10px] text-text-muted">Máximo {MAX_SIZE_MB} MB. Formatos: JPG, PNG.</p>
         </div>
+
         <div>
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Descripción Detallada:</label>
           <textarea required value={newDescription} onChange={(e) => setNewDescription(e.target.value)} className="w-full h-24 rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed" placeholder="Describe las condiciones, detalles técnicos y procedencia del producto..." />
         </div>
+
         <div className="pt-2">
           <button type="submit" disabled={submitting} className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-black py-3 text-center text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-lg shadow-amber-500/5 active:scale-98 disabled:opacity-50">
             {submitting ? 'Creando...' : 'Publicar Artículo'}
