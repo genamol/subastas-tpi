@@ -16,6 +16,7 @@ import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.service.SubastaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 // usamos supress por los warnings de lombok si no hay que hacer el constructor manual
@@ -37,6 +39,9 @@ public class SubastaServiceImpl implements SubastaService {
     private final UsuarioRepository usuarioRepository;
     private final HistorialEstadoRepository historialEstadoRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Value("${subasta.visibilidad-horas:12}")
+    private int visibilidadHoras;
 
     @Override
     @Transactional
@@ -154,9 +159,11 @@ public class SubastaServiceImpl implements SubastaService {
     @Override
     @Transactional(readOnly = true)
     public Page<SubastaResponse> obtenerTodas(Pageable pageable) {
-        return subastaRepository.findByEstadoIn(
+        Instant limite = Instant.now().minus(visibilidadHoras, ChronoUnit.HOURS);
+        return subastaRepository.findVisibles(
                 List.of(EstadoSubasta.PUBLICADA, EstadoSubasta.ACTIVA, EstadoSubasta.FINALIZADA,
                         EstadoSubasta.ADJUDICADA),
+                limite,
                 pageable).map(this::mapToResponse);
     }
 

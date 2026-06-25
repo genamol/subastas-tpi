@@ -33,6 +33,12 @@ public interface SubastaRepository extends JpaRepository<Subasta, Long> {
     boolean existsByProductoIdAndEstadoIn(Long productoId, List<EstadoSubasta> estados);
 
     long countByVendedorId(Long vendedorId);
-
     Page<Subasta> findByVendedorId(Long vendedorId, Pageable pageable);
+
+    @Query("SELECT s FROM Subasta s WHERE s.estado IN :estados " +
+           "AND (s.fechaAdjudicacion IS NULL OR s.fechaAdjudicacion > :limite)")
+    Page<Subasta> findVisibles(@Param("estados") List<EstadoSubasta> estados,
+                               @Param("limite") Instant limite,
+                               Pageable pageable);
+
 }

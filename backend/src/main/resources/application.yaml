@@ -27,6 +27,7 @@ jwt:
 subasta:
   cierre:
     intervalo-ms: 30000  # cada 30 segundos
+  visibilidad-horas: 12  # horas que se muestran las subastas finalizadas/adjudicadas
 
 springdoc:
   api-docs:
