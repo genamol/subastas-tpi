@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { API_URL } from '../config';
 
 type SseHandlers = Record<string, (data: unknown) => void>;
 
@@ -15,7 +16,7 @@ export function useSse(
 
     async function conectar() {
       const ticket = await obtenerTicket();
-      const url = `http://localhost:8080${rutaStream}?ticket=${ticket}`;
+      const url = `${API_URL}${rutaStream}?ticket=${ticket}`;
       es = new EventSource(url);
 
       Object.keys(handlersRef.current).forEach((evento) => {
