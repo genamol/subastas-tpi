@@ -66,6 +66,11 @@ public class JwtService {
         return getClaims(token).get("email", String.class);
     }
 
+    @SuppressWarnings("unchecked")
+    public List<String> extraerRoles(String token) {
+        return getClaims(token).get("roles", List.class);
+    }
+
     public Date extraerExpiracion(String token) {
         return getClaims(token).getExpiration();
     }
