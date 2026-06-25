@@ -212,9 +212,15 @@ export default function SubastaDetailPage() {
               <span className="font-mono text-3xl font-extrabold text-amber-500">${auction.currentPrice.toLocaleString('es-ES')}</span>
             </div>
             {successMessage && <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-xs text-emerald-400">{successMessage}</div>}
-            <div className="flex items-center justify-between text-xs text-text-secondary mb-3">
-              <span>Incremento mínimo: <strong className="text-text-primary font-mono">+${auction.minIncrement}</strong></span>
-              <span>Puja rápida: <button onClick={handleQuickBid} className="rounded-lg bg-amber-500 text-black px-2 py-0.5 text-[11px] font-bold hover:bg-amber-400">+${auction.minIncrement}</button></span>
+            <div className="space-y-2 text-xs text-text-secondary mb-3">
+              <div className="flex items-center justify-between">
+                <span>Incremento mínimo:</span>
+                <strong className="text-text-primary font-mono">+${auction.minIncrement}</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Puja rápida:</span>
+                <button onClick={handleQuickBid} className="rounded-lg bg-amber-500 text-black px-3 py-1 text-[11px] font-bold hover:bg-amber-400">¡Oferta! +${auction.minIncrement}</button>
+              </div>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); handleBid(); }} className="space-y-3">
               <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tu oferta es de... (ARS):</label>
