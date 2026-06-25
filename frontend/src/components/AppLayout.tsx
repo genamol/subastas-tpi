@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { useSse } from '../hooks/useSse';
 import { obtenerTicketNotificaciones } from '../services/sseService';
+import { subirAImgbb } from '../services/imgbbService';
 import ThemeToggle from './ThemeToggle';
 import { useState, useRef, useEffect } from 'react';
 
