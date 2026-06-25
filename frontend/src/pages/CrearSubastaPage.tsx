@@ -1,17 +1,20 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Upload } from 'lucide-react';
 import { subirImagen } from '../services/imagenService';
 import * as subastaService from '../services/subastaService';
 import * as productoService from '../services/productoService';
+import api from '../services/api';
 
 const MAX_SIZE_MB = 5;
-const CATEGORIAS = ['Tecnología', 'Hogar', 'Vehículos', 'Deportes', 'Coleccionables', 'Herramientas'];
+
+interface Categoria { id: number; nombre: string; }
 
 export default function CrearSubastaPage() {
   const navigate = useNavigate();
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState(CATEGORIAS[0]);
+  const [newCategoryId, setNewCategoryId] = useState<number>(0);
   const [newImage, setNewImage] = useState('');
   const [newBasePrice, setNewBasePrice] = useState('');
   const [newMinIncrement, setNewMinIncrement] = useState('');
@@ -23,6 +26,13 @@ export default function CrearSubastaPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api.get<Categoria[]>('/api/categorias').then(({ data }) => {
+      setCategorias(data);
+      if (data.length > 0) setNewCategoryId(data[0].id);
+    }).catch(() => {});
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,12 +59,10 @@ export default function CrearSubastaPage() {
       const duracionMs = parseFloat(newDuration) * 60 * 1000;
       const ahora = new Date().toISOString();
       const cierre = new Date(Date.now() + duracionMs).toISOString();
-      const categoriaId = CATEGORIAS.indexOf(newCategory);
-
       const producto = await productoService.crearProducto({
         nombre: newTitle,
         descripcion: newDescription,
-        categoriaId: categoriaId > 0 ? categoriaId : 1,
+        categoriaId: newCategoryId,
         imagenes: newImage ? [newImage] : [],
       });
 
@@ -98,8 +106,8 @@ export default function CrearSubastaPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
-            <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
-              {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+            <select value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
           </div>
           <div>
