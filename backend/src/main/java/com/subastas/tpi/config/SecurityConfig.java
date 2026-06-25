@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/subastas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subastas/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/notificaciones/stream").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subastas/{id}/stream").permitAll()
