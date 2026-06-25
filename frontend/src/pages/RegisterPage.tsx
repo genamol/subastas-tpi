@@ -120,12 +120,11 @@ export default function RegisterPage() {
             </label>
             <input
               id="telefono"
-              type="tel"
-              required
+              type="text"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
               className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
-              placeholder="Ej: 3541234567"
+              placeholder="+54 11 1234-5678"
             />
           </div>
 
