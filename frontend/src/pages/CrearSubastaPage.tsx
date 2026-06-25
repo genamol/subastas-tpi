@@ -125,8 +125,8 @@ export default function CrearSubastaPage() {
         </div>
 
         <div>
-          <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
-          <select value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))}
+            <label htmlFor="categoria" className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
+            <select id="categoria" value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))}
             className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
             <option value={0}>Seleccionar categoría</option>
             {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -165,16 +165,16 @@ export default function CrearSubastaPage() {
 
           {!iniciarAhora && (
             <div>
-              <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Inicio:</label>
-              <input type="datetime-local" required value={fechaInicio} min={minFechaInicio}
+              <label htmlFor="fecha-inicio" className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Inicio:</label>
+              <input id="fecha-inicio" type="datetime-local" required value={fechaInicio} min={minFechaInicio}
                 onChange={(e) => setFechaInicio(e.target.value)}
                 className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none" />
             </div>
           )}
 
           <div>
-            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Cierre:</label>
-            <input type="datetime-local" required value={fechaCierre}
+            <label htmlFor="fecha-cierre" className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Cierre:</label>
+            <input id="fecha-cierre" type="datetime-local" required value={fechaCierre}
               min={iniciarAhora ? minFechaInicio : fechaInicio}
               onChange={(e) => setFechaCierre(e.target.value)}
               className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none" />
@@ -191,7 +191,7 @@ export default function CrearSubastaPage() {
               className="flex items-center gap-1.5 rounded-xl border border-border bg-input px-4 py-3 text-xs font-medium text-text-secondary hover:text-amber-400 hover:border-amber-500/30 transition disabled:opacity-50">
               <Upload className="h-4 w-4" /><span>{uploading ? 'Subiendo...' : 'Archivo'}</span>
             </button>
-            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handleFileUpload} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handleFileUpload} className="hidden" title="Subir imagen" />
           </div>
           {uploadError && <p className="mt-1 text-[11px] text-rose-400">{uploadError}</p>}
           {newImage && <img src={newImage} alt="Vista previa" className="mt-2 h-24 rounded-xl object-cover border border-border" />}
