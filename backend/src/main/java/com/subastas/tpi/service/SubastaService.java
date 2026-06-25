@@ -13,6 +13,7 @@ public interface SubastaService {
     SubastaResponse cancelarSubastaAdmin(Long id, Long adminId);
     SubastaResponse obtenerPorId(Long id);
     Page<SubastaResponse> obtenerTodas(Pageable pageable);
+    Page<SubastaResponse> obtenerMisSubastas(Long vendedorId, Pageable pageable);
     void procesarCierresAutomaticos();
 
 

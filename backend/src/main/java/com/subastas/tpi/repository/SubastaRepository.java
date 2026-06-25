@@ -33,7 +33,12 @@ public interface SubastaRepository extends JpaRepository<Subasta, Long> {
 
     boolean existsByProductoIdAndEstadoIn(Long productoId, List<EstadoSubasta> estados);
 
+<<<<<<< HEAD
     long countByVendedorId(Long vendedorId);
 
     Page<Subasta> findByVendedorId(Long vendedorId, Pageable pageable);
+=======
+    Page<Subasta> findByVendedorId(Long vendedorId, Pageable pageable);
+
+>>>>>>> f6251b7ad16aa90189eb5db6ae623179c569d726
 }

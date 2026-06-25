@@ -34,3 +34,8 @@ export async function cancelarSubasta(id: number): Promise<Auction> {
   const { data } = await api.put<SubastaBackend>(`/api/subastas/${id}/cancelar`);
   return mapSubastaToAuction(data);
 }
+
+export async function misSubastas(page = 0, size = 20): Promise<{ items: Auction[]; totalPages: number; totalElements: number; page: number }> {
+  const { data } = await api.get<PaginatedResponse<SubastaBackend>>(`/api/subastas/mis-subastas?page=${page}&size=${size}`);
+  return mapPageToPaginated(data, mapSubastaToAuction);
+}

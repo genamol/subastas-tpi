@@ -50,6 +50,12 @@ public class SubastaController {
         return ResponseEntity.ok(subastaService.cancelarSubasta(id, usuario.getId()));
     }
 
+    @GetMapping("/mis-subastas")
+    public ResponseEntity<Page<SubastaResponse>> misSubastas(@AuthenticationPrincipal Usuario usuario,
+                                                              Pageable pageable) {
+        return ResponseEntity.ok(subastaService.obtenerMisSubastas(usuario.getId(), pageable));
+    }
+
     @PutMapping("/{id}/cancelar-admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubastaResponse> cancelarAdmin(@PathVariable Long id,
