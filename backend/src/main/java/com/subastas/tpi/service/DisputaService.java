@@ -13,4 +13,6 @@ public interface DisputaService {
     DisputaResponse resolver(Long disputaId, DisputaResolucionRequest request, Long adminId);
 
     Page<DisputaResponse> obtenerPorSubasta(Long subastaId, Pageable pageable);
+
+    Page<DisputaResponse> obtenerTodas(Pageable pageable);
 }

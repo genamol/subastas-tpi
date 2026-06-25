@@ -11,6 +11,8 @@ public interface NotificacionService {
 
     void marcarComoLeida(Long notificacionId, Long usuarioId);
 
+    void marcarTodasLeidas(Long usuarioId);
+
     long contarNoLeidas(Long usuarioId);
 
     Notificacion notificarVendedorNuevaPuja(Long subastaId);

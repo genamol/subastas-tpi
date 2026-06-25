@@ -20,3 +20,8 @@ export async function misPujas(page = 0, size = 20): Promise<{ items: Bid[]; tot
     page: data.number,
   };
 }
+
+export async function obtenerPujasPorSubasta(subastaId: string | number, page = 0, size = 50): Promise<Bid[]> {
+  const { data } = await api.get<PaginatedResponse<PujaBackend>>(`/api/pujas/subasta/${subastaId}?page=${page}&size=${size}`);
+  return data.content.map(mapPujaToBid);
+}

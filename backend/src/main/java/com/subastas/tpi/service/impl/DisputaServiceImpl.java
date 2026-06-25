@@ -101,6 +101,12 @@ public class DisputaServiceImpl implements DisputaService {
             .map(this::mapToResponse);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<DisputaResponse> obtenerTodas(Pageable pageable) {
+        return disputaRepository.findAll(pageable).map(this::mapToResponse);
+    }
+
     private DisputaResponse mapToResponse(Disputa disputa) {
         return DisputaResponse.builder()
             .id(disputa.getId())

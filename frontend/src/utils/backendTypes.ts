@@ -10,6 +10,9 @@ export interface SubastaBackend {
   fechaAdjudicacion: string | null;
   productoId: number;
   productoNombre: string;
+  categoriaNombre: string;
+  imagenes: string[];
+  totalPujas: number;
   vendedorId: number;
   vendedorNombre: string;
   ganadorId: number | null;
@@ -21,7 +24,8 @@ export interface PujaBackend {
   monto: number;
   fechaPuja: string;
   subastaId: number;
-  montoActual: number;
+  ofertanteId: number | null;
+  ofertanteNombre: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -72,5 +76,6 @@ export interface DisputaBackend {
   fechaResolucion: string | null;
   subastaId: number;
   iniciadorId: number;
+  iniciadorNombre: string;
   resoltorId: number | null;
 }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
@@ -26,6 +27,9 @@ public class SubastaResponse {
     private Instant fechaAdjudicacion;
     private Long productoId;
     private String productoNombre;
+    private String categoriaNombre;
+    private List<String> imagenes;
+    private int totalPujas;
     private Long vendedorId;
     private String vendedorNombre;
     private Long ganadorId;

@@ -3,7 +3,10 @@ import { Clock, Gavel } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubastas } from '../hooks/useSubastas';
 import { Spinner, CardSkeleton } from '../components/Spinner';
+import api from '../services/api';
 import type { Auction } from '../types';
+
+interface Categoria { id: number; nombre: string; }
 
 function formatCountdown(endTime: string): { text: string; urgent: boolean; ended: boolean } {
   const diff = new Date(endTime).getTime() - Date.now();
@@ -39,14 +42,21 @@ function CardCountdown({ endTime }: { endTime: string }) {
   );
 }
 
-const CATEGORIAS = ['Todos', 'Tecnología', 'Hogar', 'Vehículos', 'Deportes', 'Coleccionables', 'Herramientas'];
-
 export default function CatalogoPage() {
   const { auctions, loading, error, pujar } = useSubastas();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [bidError, setBidError] = useState<string | null>(null);
+  const [categorias, setCategorias] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.get<Categoria[]>('/api/categorias').then(({ data }) => {
+      setCategorias(['Todos', ...data.map(c => c.nombre)]);
+    }).catch(() => {
+      setCategorias(['Todos']);
+    });
+  }, []);
 
   const filteredAuctions = auctions.filter(a => {
     const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
@@ -88,7 +98,7 @@ export default function CatalogoPage() {
           />
         </div>
         <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto overflow-x-auto max-w-full">
-          {CATEGORIAS.map(cat => (
+          {categorias.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}

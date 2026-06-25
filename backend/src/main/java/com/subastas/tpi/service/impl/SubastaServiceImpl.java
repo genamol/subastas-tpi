@@ -5,6 +5,7 @@ import com.subastas.tpi.dto.response.SubastaResponse;
 import com.subastas.tpi.event.EstadoCambiadoEvent;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.HistorialEstado;
+import com.subastas.tpi.model.ImagenProducto;
 import com.subastas.tpi.model.Producto;
 import com.subastas.tpi.model.Subasta;
 import com.subastas.tpi.model.Usuario;
@@ -205,6 +206,13 @@ public class SubastaServiceImpl implements SubastaService {
     }
 
     private SubastaResponse mapToResponse(Subasta subasta) {
+        Producto producto = subasta.getProducto();
+        List<String> imagenes = producto.getImagenes() != null
+                ? producto.getImagenes().stream().map(ImagenProducto::getUrl).toList()
+                : List.of();
+        int totalPujas = subasta.getPujas() != null ? subasta.getPujas().size() : 0;
+        String categoriaNombre = producto.getCategoria() != null ? producto.getCategoria().getNombre() : "";
+
         return SubastaResponse.builder()
                 .id(subasta.getId())
                 .precioBase(subasta.getPrecioBase())
@@ -215,8 +223,11 @@ public class SubastaServiceImpl implements SubastaService {
                 .estado(subasta.getEstado())
                 .descripcion(subasta.getDescripcion())
                 .fechaAdjudicacion(subasta.getFechaAdjudicacion())
-                .productoId(subasta.getProducto().getId())
-                .productoNombre(subasta.getProducto().getNombre())
+                .productoId(producto.getId())
+                .productoNombre(producto.getNombre())
+                .categoriaNombre(categoriaNombre)
+                .imagenes(imagenes)
+                .totalPujas(totalPujas)
                 .vendedorId(subasta.getVendedor().getId())
                 .vendedorNombre(subasta.getVendedor().getNombre())
                 .ganadorId(subasta.getGanador() != null ? subasta.getGanador().getId() : null)
