@@ -1,11 +1,11 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package } from 'lucide-react';
+import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { useSse } from '../hooks/useSse';
 import { obtenerTicketNotificaciones } from '../services/sseService';
 import ThemeToggle from './ThemeToggle';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function AppLayout() {
   const { nombre, isAdmin, logout } = useAuth();
@@ -13,8 +13,20 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useSse(obtenerTicketNotificaciones, '/api/notificaciones/stream', {
     'notificacion-nueva': () => {
@@ -70,9 +82,36 @@ export default function AppLayout() {
               )}
             </button>
 
-            <button onClick={logout} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-text-secondary hover:text-rose-400 transition-colors">
-              <LogOut className="h-4 w-4" />
-            </button>
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(v => !v)}
+                className="flex items-center gap-2 h-9 px-3 rounded-xl border border-border bg-surface text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-colors"
+              >
+                <div className="h-6 w-6 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-[10px] select-none">
+                  {(nombre ?? 'U').charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden lg:block text-xs font-medium text-text-primary max-w-[100px] truncate">{nombre}</span>
+                <ChevronDown className="h-3 w-3" />
+              </button>
+
+              {showUserMenu && (
+                <div className="absolute right-0 top-11 z-50 w-44 rounded-xl border border-border bg-surface shadow-xl py-1">
+                  <button
+                    onClick={() => { setShowUserMenu(false); navigate('/perfil'); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-input transition-colors"
+                  >
+                    <User className="h-3.5 w-3.5" /> Mi Perfil
+                  </button>
+                  <div className="border-t border-border my-1" />
+                  <button
+                    onClick={() => { setShowUserMenu(false); logout(); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-input transition-colors"
+                  >
+                    <LogOut className="h-3.5 w-3.5" /> Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

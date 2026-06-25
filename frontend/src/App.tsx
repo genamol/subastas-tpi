@@ -10,6 +10,7 @@ import MisPujasPage from './pages/MisPujasPage';
 import MisSubastasPage from './pages/MisSubastasPage';
 import CrearSubastaPage from './pages/CrearSubastaPage';
 import AdminPage from './pages/AdminPage';
+import PerfilPage from './pages/PerfilPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -39,6 +40,7 @@ export default function AppRouter() {
               <Route path="/mis-subastas" element={<MisSubastasPage />} />
               <Route path="/crear" element={<CrearSubastaPage />} />
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+              <Route path="/perfil" element={<PerfilPage />} />
             </Route>
             <Route path="/" element={<Navigate to="/catalogo" replace />} />
             <Route path="*" element={<Navigate to="/catalogo" replace />} />

@@ -10,4 +10,6 @@ public interface PujaRepository extends JpaRepository<Puja, Long> {
     Page<Puja> findByOfertanteIdOrderByFechaPujaDesc(Long ofertanteId, Pageable pageable);
 
     Page<Puja> findBySubastaIdOrderByFechaPujaDesc(Long subastaId, Pageable pageable);
+
+    long countByOfertanteId(Long ofertanteId);
 }
