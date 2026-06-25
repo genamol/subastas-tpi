@@ -1,16 +1,29 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import ThemeToggle from './ThemeToggle';
 import { useNotificaciones } from '../context/NotificacionesContext';
-import { useState } from 'react';
+import { useSse } from '../hooks/useSse';
+import { obtenerTicketNotificaciones } from '../services/sseService';
+import ThemeToggle from './ThemeToggle';
+import { useState, useRef } from 'react';
 
 export default function AppLayout() {
   const { nombre, isAdmin, logout } = useAuth();
-  const { unreadCount, notifications } = useNotificaciones();
+  const { unreadCount, notifications, cargar } = useNotificaciones();
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useSse(obtenerTicketNotificaciones, '/api/notificaciones/stream', {
+    'notificacion-nueva': () => {
+      cargar();
+      setToast('Nueva notificación');
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToast(null), 4000);
+    },
+  });
 
   const tabs = [
     { id: '/catalogo', label: 'Catálogo', icon: LayoutDashboard },
@@ -73,6 +86,12 @@ export default function AppLayout() {
           ))}
         </div>
       </header>
+
+      {toast && (
+        <div className="fixed top-16 right-4 z-50 animate-fade-in rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-2 text-xs text-amber-400 shadow-lg">
+          🔔 {toast}
+        </div>
+      )}
 
       {showNotifications && (
         <div className="absolute top-14 right-4 z-50 w-72 rounded-xl border border-border bg-surface shadow-xl">

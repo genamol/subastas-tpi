@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Upload } from 'lucide-react';
 import { subirImagen } from '../services/imagenService';
 import * as subastaService from '../services/subastaService';
+import * as productoService from '../services/productoService';
 
 const MAX_SIZE_MB = 5;
 const CATEGORIAS = ['Tecnología', 'Hogar', 'Vehículos', 'Deportes', 'Coleccionables', 'Herramientas'];
@@ -48,9 +49,17 @@ export default function CrearSubastaPage() {
       const duracionMs = parseFloat(newDuration) * 60 * 1000;
       const ahora = new Date().toISOString();
       const cierre = new Date(Date.now() + duracionMs).toISOString();
+      const categoriaId = CATEGORIAS.indexOf(newCategory);
+
+      const producto = await productoService.crearProducto({
+        nombre: newTitle,
+        descripcion: newDescription,
+        categoriaId: categoriaId > 0 ? categoriaId : 1,
+        imagenes: newImage ? [newImage] : [],
+      });
 
       await subastaService.crearSubasta({
-        productoId: 1,
+        productoId: producto.id,
         precioBase: parseFloat(newBasePrice),
         incrementoMinimo: parseFloat(newMinIncrement),
         fechaInicio: ahora,
