@@ -44,6 +44,22 @@ public class CalificacionServiceImpl implements CalificacionService {
             throw new BusinessException("calificacion.ya.existe", HttpStatus.CONFLICT);
         }
 
+        boolean esVendedor = subasta.getVendedor().getId().equals(calificadorId);
+        boolean esGanador = subasta.getGanador() != null && subasta.getGanador().getId().equals(calificadorId);
+        if (!esVendedor && !esGanador) {
+            throw new BusinessException("calificacion.no.involucrado", HttpStatus.FORBIDDEN);
+        }
+
+        boolean calificadoEsGanador = subasta.getGanador() != null && subasta.getGanador().getId().equals(request.getCalificadoId());
+        boolean calificadoEsVendedor = subasta.getVendedor().getId().equals(request.getCalificadoId());
+        if (!calificadoEsGanador && !calificadoEsVendedor) {
+            throw new BusinessException("calificacion.calificado.invalido", HttpStatus.BAD_REQUEST);
+        }
+
+        if (calificadorId.equals(request.getCalificadoId())) {
+            throw new BusinessException("calificacion.a.si.mismo", HttpStatus.BAD_REQUEST);
+        }
+
         Calificacion calificacion = new Calificacion();
         calificacion.setPuntuacion(request.getPuntuacion());
         calificacion.setComentario(request.getComentario());
