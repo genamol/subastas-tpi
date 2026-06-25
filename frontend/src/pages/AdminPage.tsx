@@ -6,7 +6,7 @@ import { obtenerTicketAdmin } from '../services/sseService';
 import * as adminService from '../services/adminService';
 import api from '../services/api';
 import { Spinner } from '../components/Spinner';
-import type { Dispute, UserAccount, Auction } from '../types';
+import type { Dispute, UserAccount } from '../types';
 
 export default function AdminPage() {
   const { auctions } = useSubastas();
@@ -30,6 +30,7 @@ export default function AdminPage() {
   });
 
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingDisputes, setLoadingDisputes] = useState(true);
 
   useEffect(() => {
     adminService.listarUsuarios().then(res => {
@@ -44,6 +45,25 @@ export default function AdminPage() {
       })));
       setLoadingUsers(false);
     }).catch(() => { setLoadingUsers(false); });
+  }, []);
+
+  useEffect(() => {
+    api.get('/api/disputas?page=0&size=50').then(res => {
+      setDisputes(res.data.content.map((d: { id: number; tipo: string; descripcion: string; resolucionAdmin: string | null; fechaCreacion: string; fechaResolucion: string | null; subastaId: number; iniciadorNombre: string }) => ({
+        id: String(d.id),
+        subastaId: String(d.subastaId),
+        subastaTitle: `Subasta #${d.subastaId}`,
+        iniciador: d.iniciadorNombre,
+        motivo: d.tipo as Dispute['motivo'],
+        descripcion: d.descripcion,
+        fechaCreacion: d.fechaCreacion,
+        estado: d.resolucionAdmin ? 'RESUELTA' as const : 'ABIERTA' as const,
+        resolucionAdmin: d.resolucionAdmin ?? undefined,
+        estadoFinalSubasta: undefined,
+        fechaResolucion: d.fechaResolucion ?? undefined,
+      })));
+      setLoadingDisputes(false);
+    }).catch(() => { setLoadingDisputes(false); });
   }, []);
 
   const handleResolveDispute = async (id: string, state: 'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA', resolution: string) => {
@@ -72,7 +92,7 @@ export default function AdminPage() {
 
   return (
     <div className="animate-fade-in">
-      {loadingUsers ? <Spinner /> : (
+      {loadingUsers || loadingDisputes ? <Spinner /> : (
       <AdminPanel
         disputes={disputes}
         users={users}
