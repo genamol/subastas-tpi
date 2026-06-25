@@ -2,6 +2,7 @@ package com.subastas.tpi.service.impl;
 
 import com.subastas.tpi.dto.request.SubastaRequest;
 import com.subastas.tpi.dto.response.SubastaResponse;
+import com.subastas.tpi.event.EstadoCambiadoEvent;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.HistorialEstado;
 import com.subastas.tpi.model.Producto;
@@ -14,6 +15,7 @@ import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.service.SubastaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,7 @@ public class SubastaServiceImpl implements SubastaService {
     private final ProductoRepository productoRepository;
     private final UsuarioRepository usuarioRepository;
     private final HistorialEstadoRepository historialEstadoRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -86,6 +89,7 @@ public class SubastaServiceImpl implements SubastaService {
         subasta.setEstado(EstadoSubasta.PUBLICADA);
         Subasta actualizada = subastaRepository.save(subasta);
         registrarHistorialEstado(actualizada, estadoAnterior, EstadoSubasta.PUBLICADA, "Subasta publicada", subasta.getVendedor());
+        eventPublisher.publishEvent(new EstadoCambiadoEvent(actualizada.getId(), EstadoSubasta.PUBLICADA));
         return mapToResponse(actualizada);
     }
 
@@ -111,6 +115,7 @@ public class SubastaServiceImpl implements SubastaService {
         subasta.setEstado(EstadoSubasta.CANCELADA);
         Subasta actualizada = subastaRepository.save(subasta);
         registrarHistorialEstado(actualizada, estadoActual, EstadoSubasta.CANCELADA, "Subasta cancelada por el vendedor", subasta.getVendedor());
+        eventPublisher.publishEvent(new EstadoCambiadoEvent(actualizada.getId(), EstadoSubasta.CANCELADA));
 
         return mapToResponse(actualizada);
     }
@@ -132,6 +137,7 @@ public class SubastaServiceImpl implements SubastaService {
         subasta.setEstado(EstadoSubasta.CANCELADA);
         Subasta actualizada = subastaRepository.save(subasta);
         registrarHistorialEstado(actualizada, estadoActual, EstadoSubasta.CANCELADA, "Cancelada por administrador", admin);
+        eventPublisher.publishEvent(new EstadoCambiadoEvent(actualizada.getId(), EstadoSubasta.CANCELADA));
 
         return mapToResponse(actualizada);
     }
@@ -164,6 +170,7 @@ public class SubastaServiceImpl implements SubastaService {
             subasta.setEstado(EstadoSubasta.ACTIVA);
             subastaRepository.save(subasta);
             registrarHistorialEstado(subasta, anterior, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
+            eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), EstadoSubasta.ACTIVA));
         }
 
         List<Subasta> aCerrar = subastaRepository.findByEstadoAndFechaCierreBefore(EstadoSubasta.ACTIVA, ahora);
@@ -180,6 +187,7 @@ public class SubastaServiceImpl implements SubastaService {
 
             String motivo = tienePujas ? "Adjudicada automáticamente al vencer el tiempo" : "Finalizada automáticamente sin ofertas";
             registrarHistorialEstado(subasta, anterior, nuevoEstado, motivo, null);
+            eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), nuevoEstado));
         }
     }
 

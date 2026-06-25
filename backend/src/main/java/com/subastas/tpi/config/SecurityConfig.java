@@ -1,6 +1,8 @@
 package com.subastas.tpi.config;
 
+import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.security.JwtAuthenticationFilter;
+import com.subastas.tpi.security.JwtService;
 import com.subastas.tpi.security.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,20 +25,27 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final RateLimitingFilter rateLimitingFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          RateLimitingFilter rateLimitingFilter,
-                          CorsConfigurationSource corsConfigurationSource) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.rateLimitingFilter = rateLimitingFilter;
+    public SecurityConfig(CorsConfigurationSource corsConfigurationSource) {
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService,
+                                                            UsuarioRepository usuarioRepository) {
+        return new JwtAuthenticationFilter(jwtService, usuarioRepository);
+    }
+
+    @Bean
+    public RateLimitingFilter rateLimitingFilter(JwtService jwtService) {
+        return new RateLimitingFilter(jwtService);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                    JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                    RateLimitingFilter rateLimitingFilter) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -48,7 +57,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/subastas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subastas/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/notificaciones/stream").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subastas/{id}/stream").permitAll()
@@ -56,7 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(rateLimitingFilter, JwtAuthenticationFilter.class)
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

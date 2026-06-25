@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import com.subastas.tpi.model.Usuario;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,17 +26,14 @@ public class SubastaSseController {
 
     @Operation(summary = "Generar ticket efímero para autenticar la conexión SSE")
     @PostMapping("/api/tickets")
-    public ResponseEntity<TicketResponse> generarTicket(Authentication auth) {
-        Long userId = (Long) auth.getPrincipal();
-        String ticket = ticketService.generarTicket(userId);
+    public ResponseEntity<TicketResponse> generarTicket(@AuthenticationPrincipal Usuario usuario) {
+        String ticket = ticketService.generarTicket(usuario.getId());
         return ResponseEntity.ok(new TicketResponse(ticket));
     }
 
     @Operation(summary = "Canal SSE por subasta. Requiere ticket como query param.")
     @GetMapping("/api/subastas/{id}/stream")
-    public SseEmitter stream(@PathVariable Long id,
-                             @RequestParam String ticket,
-                             Authentication auth) {
+    public SseEmitter stream(@PathVariable Long id, @RequestParam String ticket) {
         Long userId = ticketService.validarYConsumir(ticket);
         return sseService.suscribir(id, userId);
     }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Notification } from '../types';
 import * as notificacionService from '../services/notificacionService';
 
@@ -16,9 +16,15 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const cargar = useCallback(async () => {
-    const result = await notificacionService.listarNotificaciones();
-    setNotifications(result.items);
+    try {
+      const result = await notificacionService.listarNotificaciones();
+      setNotifications(result.items);
+    } catch {
+      // backend no disponible
+    }
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   const marcarLeida = useCallback(async (id: number) => {
     await notificacionService.marcarLeida(id);

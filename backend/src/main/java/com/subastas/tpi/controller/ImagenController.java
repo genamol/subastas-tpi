@@ -35,8 +35,10 @@ public class ImagenController {
             throw new BusinessException("imagen.formato.invalido", HttpStatus.BAD_REQUEST);
         }
 
-        String nombre = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path ruta = Paths.get(UPLOAD_DIR + nombre);
+        String nombreOriginal = Paths.get(file.getOriginalFilename() != null
+                ? file.getOriginalFilename() : "archivo").getFileName().toString();
+        String nombre = UUID.randomUUID() + "_" + nombreOriginal;
+        Path ruta = Paths.get(UPLOAD_DIR).resolve(nombre).normalize();
         Files.createDirectories(ruta.getParent());
         Files.copy(file.getInputStream(), ruta);
 

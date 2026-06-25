@@ -6,6 +6,8 @@ import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.service.SubastaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class SubastaController {
 
     private final SubastaService subastaService;
+
+    @GetMapping
+    public ResponseEntity<Page<SubastaResponse>> listar(Pageable pageable) {
+        return ResponseEntity.ok(subastaService.obtenerTodas(pageable));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<SubastaResponse> obtenerPorId(@PathVariable Long id) {

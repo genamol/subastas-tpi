@@ -4,12 +4,8 @@ import { mapNotificacionToNotification, mapPageToPaginated } from '../utils/mapp
 import type { Notification } from '../types';
 
 export async function listarNotificaciones(page = 0, size = 20): Promise<{ items: Notification[]; totalPages: number; totalElements: number; page: number }> {
-  try {
-    const { data } = await api.get<PaginatedResponse<NotificacionBackend>>(`/api/notificaciones?page=${page}&size=${size}`);
-    return mapPageToPaginated(data, mapNotificacionToNotification);
-  } catch {
-    return { items: [], totalPages: 0, totalElements: 0, page: 0 };
-  }
+  const { data } = await api.get<PaginatedResponse<NotificacionBackend>>(`/api/notificaciones?page=${page}&size=${size}`);
+  return mapPageToPaginated(data, mapNotificacionToNotification);
 }
 
 export async function marcarLeida(id: number) {

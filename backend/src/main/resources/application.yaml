@@ -12,6 +12,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
 
 # Propiedades custom para los tokens lógicos del Backend
 jwt:
