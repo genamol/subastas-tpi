@@ -1,31 +1,28 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Package } from 'lucide-react';
-import { useSubastas } from '../hooks/useSubastas';
-import { useAuth } from '../context/AuthContext';
+import * as subastaService from '../services/subastaService';
+import type { Auction } from '../types';
 
 export default function MisSubastasPage() {
-  const { auctions } = useSubastas();
-  const { isAuthenticated } = useAuth();
+  const [subastas, setSubastas] = useState<Auction[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('access_token');
-  let userId: number | null = null;
-  if (token) {
-    try { userId = JSON.parse(atob(token.split('.')[1])).sub; } catch { /* */ }
-  }
-
-  const misSubastas = auctions.filter(a => Number(a.vendedorId) === Number(userId));
+  useEffect(() => {
+    subastaService.misSubastas().then(r => setSubastas(r.items)).finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center space-x-3">
         <h3 className="font-display text-lg font-bold text-text-primary uppercase tracking-wide">Mis Publicaciones</h3>
         <span className="px-2.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold rounded-lg">
-          {misSubastas.length} subastas
+          {subastas.length} subastas
         </span>
       </div>
 
-      {misSubastas.length === 0 ? (
+      {subastas.length === 0 ? (
         <div className="py-20 text-center rounded-2xl border border-dashed border-border">
           <Package className="h-10 w-10 text-text-secondary/60 mx-auto mb-3" />
           <span className="block text-text-muted text-sm">No tenés publicaciones</span>
@@ -35,7 +32,7 @@ export default function MisSubastasPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {misSubastas.map(auc => (
+          {subastas.map(auc => (
             <div key={auc.id} onClick={() => navigate(`/subastas/${auc.id}`)}
               className="flex items-center justify-between rounded-2xl border border-border bg-surface p-4 cursor-pointer hover:border-amber-500/30 transition-all">
               <div className="flex items-center gap-4">

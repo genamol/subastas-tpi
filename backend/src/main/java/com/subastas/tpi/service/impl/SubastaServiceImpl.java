@@ -161,6 +161,12 @@ public class SubastaServiceImpl implements SubastaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<SubastaResponse> obtenerMisSubastas(Long vendedorId, Pageable pageable) {
+        return subastaRepository.findByVendedorId(vendedorId, pageable).map(this::mapToResponse);
+    }
+
+    @Override
     @Transactional
     public void procesarCierresAutomaticos() {
         Instant ahora = Instant.now();
