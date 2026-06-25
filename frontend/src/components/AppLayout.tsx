@@ -17,6 +17,18 @@ export default function AppLayout() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => localStorage.getItem('foto_perfil'));
+
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await subirAImgbb(file);
+      localStorage.setItem('foto_perfil', url);
+      setFotoPerfil(url);
+    } catch { /* error */ }
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -87,15 +99,26 @@ export default function AppLayout() {
                 onClick={() => setShowUserMenu(v => !v)}
                 className="flex items-center gap-2 h-9 px-3 rounded-xl border border-border bg-surface text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-colors"
               >
-                <div className="h-6 w-6 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-[10px] select-none">
-                  {(nombre ?? 'U').charAt(0).toUpperCase()}
+                <div className="h-6 w-6 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-[10px] select-none overflow-hidden">
+                  {fotoPerfil ? (
+                    <img src={fotoPerfil} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    (nombre ?? 'U').charAt(0).toUpperCase()
+                  )}
                 </div>
+                <input ref={fotoInputRef} type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" />
                 <span className="hidden lg:block text-xs font-medium text-text-primary max-w-[100px] truncate">{nombre}</span>
                 <ChevronDown className="h-3 w-3" />
               </button>
 
               {showUserMenu && (
                 <div className="absolute right-0 top-11 z-50 w-44 rounded-xl border border-border bg-surface shadow-xl py-1">
+                  <button
+                    onClick={() => { setShowUserMenu(false); fotoInputRef.current?.click(); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-input transition-colors"
+                  >
+                    <User className="h-3.5 w-3.5" /> Cambiar foto
+                  </button>
                   <button
                     onClick={() => { setShowUserMenu(false); navigate('/perfil'); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-input transition-colors"
