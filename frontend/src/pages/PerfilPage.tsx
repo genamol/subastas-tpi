@@ -21,13 +21,14 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 function Initials({ nombre }: { nombre: string }) {
+  const foto = localStorage.getItem('foto_perfil');
   const parts = nombre.trim().split(' ');
   const ini = parts.length >= 2
     ? parts[0][0] + parts[1][0]
     : parts[0].slice(0, 2);
   return (
-    <div className="h-20 w-20 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-2xl shadow-lg shadow-amber-500/20 select-none">
-      {ini.toUpperCase()}
+    <div className="h-20 w-20 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-2xl shadow-lg shadow-amber-500/20 select-none overflow-hidden">
+      {foto ? <img src={foto} alt="" className="h-full w-full object-cover" /> : ini.toUpperCase()}
     </div>
   );
 }
