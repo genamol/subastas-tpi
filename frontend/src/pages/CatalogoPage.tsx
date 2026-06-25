@@ -72,7 +72,7 @@ export default function CatalogoPage() {
   const handleQuickBid = async (auctionId: string) => {
     const auction = auctions.find(a => a.id === auctionId);
     if (!auction) return;
-    const result = await pujar(auctionId, auction.currentPrice + auction.minIncrement);
+    const result = await pujar(auctionId, (auction.currentPrice ?? auction.startingPrice ?? 0) + (auction.minIncrement ?? 0));
     if (result.error) {
       setBidError(result.error);
       setTimeout(() => setBidError(null), 4000);
@@ -148,7 +148,7 @@ export default function CatalogoPage() {
                   <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-3 text-xs">
                     <div>
                       <span className="block text-[9px] uppercase tracking-wider text-text-muted font-semibold mb-0.5">Oferta Actual</span>
-                      <span className="font-mono text-base font-extrabold text-amber-500">${auc.currentPrice.toLocaleString('es-ES')}</span>
+                      <span className="font-mono text-base font-extrabold text-amber-500">${(auc.currentPrice ?? 0).toLocaleString('es-ES')}</span>
                     </div>
                     <div className="text-right">
                       <span className="block text-[9px] uppercase tracking-wider text-text-muted font-semibold mb-0.5">Pujas Realizadas</span>
@@ -158,7 +158,7 @@ export default function CatalogoPage() {
                   <div className="mt-4 flex gap-2">
                     <button className="flex-1 rounded-xl bg-input hover:bg-input border border-border py-2.5 text-center text-xs font-bold text-text-primary hover:text-white transition-colors cursor-pointer">Ver Detalle</button>
                     <button onClick={(e) => { e.stopPropagation(); handleQuickBid(auc.id); }} className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold flex items-center space-x-1 cursor-pointer transition-colors shadow-lg shadow-amber-500/5 active:scale-95">
-                      <Gavel className="h-3.5 w-3.5" /><span className="leading-none">¡Oferta!<br /><span className="text-[10px]">+${auc.minIncrement}</span></span>
+                      <Gavel className="h-3.5 w-3.5" /><span className="leading-none">¡Oferta!<br /><span className="text-[10px]">+${auc.minIncrement ?? 0}</span></span>
                     </button>
                   </div>
                 </div>
