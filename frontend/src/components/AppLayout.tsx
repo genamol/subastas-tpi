@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut } from 'lucide-react';
+import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { useSse } from '../hooks/useSse';
@@ -28,6 +28,7 @@ export default function AppLayout() {
   const tabs = [
     { id: '/catalogo', label: 'Catálogo', icon: LayoutDashboard },
     { id: '/mis-pujas', label: 'Mis Ofertas', icon: Award },
+    { id: '/mis-subastas', label: 'Publicaciones', icon: Package },
     { id: '/crear', label: 'Publicar', icon: PlusCircle },
     ...(isAdmin() ? [{ id: '/admin', label: 'Admin', icon: Shield }] : []),
   ];

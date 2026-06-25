@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import CatalogoPage from './pages/CatalogoPage';
 import SubastaDetailPage from './pages/SubastaDetailPage';
 import MisPujasPage from './pages/MisPujasPage';
+import MisSubastasPage from './pages/MisSubastasPage';
 import CrearSubastaPage from './pages/CrearSubastaPage';
 import AdminPage from './pages/AdminPage';
 
@@ -35,6 +36,7 @@ export default function AppRouter() {
               <Route path="/catalogo" element={<CatalogoPage />} />
               <Route path="/subastas/:id" element={<SubastaDetailPage />} />
               <Route path="/mis-pujas" element={<MisPujasPage />} />
+              <Route path="/mis-subastas" element={<MisSubastasPage />} />
               <Route path="/crear" element={<CrearSubastaPage />} />
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             </Route>
