@@ -10,6 +10,7 @@ import MisPujasPage from './pages/MisPujasPage';
 import MisSubastasPage from './pages/MisSubastasPage';
 import CrearSubastaPage from './pages/CrearSubastaPage';
 import AdminPage from './pages/AdminPage';
+import CatalogoInvitadoPage from './pages/CatalogoInvitadoPage';
 import PerfilPage from './pages/PerfilPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,7 @@ export default function AppRouter() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/demo" element={<CatalogoInvitadoPage />} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/catalogo" element={<CatalogoPage />} />
               <Route path="/subastas/:id" element={<SubastaDetailPage />} />
