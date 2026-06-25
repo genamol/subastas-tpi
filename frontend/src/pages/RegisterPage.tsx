@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      await register(nombre, email, password);
+      await register(nombre, email, password, telefono);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: unknown) {
@@ -110,6 +111,21 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
               placeholder="Mínimo 8 caracteres"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="telefono" className="block text-xs font-medium text-text-secondary mb-1.5">
+              Teléfono
+            </label>
+            <input
+              id="telefono"
+              type="tel"
+              required
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition"
+              placeholder="Ej: 3541234567"
             />
           </div>
 
