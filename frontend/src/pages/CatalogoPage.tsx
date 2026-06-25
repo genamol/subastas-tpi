@@ -134,7 +134,7 @@ export default function CatalogoPage() {
                   {auc.category}
                 </div>
                 <div className="aspect-video w-full overflow-hidden bg-input/60 relative">
-                  <img src={auc.image} alt={auc.title} className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500 opacity-80 group-hover:opacity-100" />
+                  {auc.image ? <img src={auc.image} alt={auc.title} className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500 opacity-80 group-hover:opacity-100" /> : <div className="h-full w-full bg-input" />}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-transparent to-transparent" />
                   <CardCountdown endTime={auc.endTime} />
                 </div>
