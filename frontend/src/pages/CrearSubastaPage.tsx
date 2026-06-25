@@ -57,7 +57,7 @@ export default function CrearSubastaPage() {
     setSubmitting(true);
     try {
       const duracionMs = parseFloat(newDuration) * 60 * 1000;
-      const ahora = new Date().toISOString();
+      const ahora = new Date(Date.now() + 60000).toISOString();
       const cierre = new Date(Date.now() + duracionMs).toISOString();
       const producto = await productoService.crearProducto({
         nombre: newTitle,
