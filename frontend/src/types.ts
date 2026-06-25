@@ -29,6 +29,8 @@ export interface Auction {
   seller: Seller;
   bids: Bid[];
   status: 'active' | 'finished';
+  estado: string;
+  vendedorId: number;
 }
 
 export interface UserProfile {

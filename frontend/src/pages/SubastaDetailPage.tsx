@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Clock, History, Gavel, AlertTriangle } from 'lucide-react';
+import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban } from 'lucide-react';
 import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
 import * as subastaService from '../services/subastaService';
 import * as pujaService from '../services/pujaService';
 import * as disputaService from '../services/disputaService';
 import { DetailSkeleton } from '../components/Spinner';
+import { useAuth } from '../context/AuthContext';
 import type { Auction, Bid } from '../types';
 
 const formatDate = (isoString: string) => {
@@ -17,6 +18,7 @@ const formatDate = (isoString: string) => {
 export default function SubastaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState('');
@@ -98,6 +100,24 @@ export default function SubastaDetailPage() {
     }
   };
 
+  const handlePublicar = async () => {
+    if (!id) return;
+    try {
+      await subastaService.publicarSubasta(Number(id));
+      const updated = await subastaService.obtenerSubasta(id);
+      setAuction(updated);
+    } catch { /* error */ }
+  };
+
+  const handleCancelar = async () => {
+    if (!id) return;
+    try {
+      await subastaService.cancelarSubasta(Number(id));
+      const updated = await subastaService.obtenerSubasta(id);
+      setAuction(updated);
+    } catch { /* error */ }
+  };
+
   const handleQuickBid = async () => {
     if (!auction || !id) return;
     const amount = auction.currentPrice + auction.minIncrement;
@@ -141,6 +161,16 @@ export default function SubastaDetailPage() {
         <button onClick={() => navigate('/catalogo')} className="text-text-secondary hover:text-text-primary font-bold">Catálogo</button>
         <ChevronRight className="h-3.5 w-3.5 text-text-muted" />
         <span className="text-text-muted font-medium truncate max-w-[200px]">{auction.title}</span>
+        {isAuthenticated && auction.estado === 'BORRADOR' && (
+          <button onClick={handlePublicar} className="ml-auto flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-400 transition">
+            <Megaphone className="h-3.5 w-3.5" />Publicar
+          </button>
+        )}
+        {isAuthenticated && (auction.estado === 'PUBLICADA' || auction.estado === 'ACTIVA') && (
+          <button onClick={handleCancelar} className="ml-auto flex items-center gap-1 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-400 transition">
+            <Ban className="h-3.5 w-3.5" />Cancelar
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

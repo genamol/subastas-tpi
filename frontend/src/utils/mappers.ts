@@ -21,6 +21,8 @@ export function mapSubastaToAuction(subasta: SubastaBackend): Auction {
     } as Seller,
     bids: [],
     status: mapEstadoToStatus(subasta.estado),
+    estado: subasta.estado,
+    vendedorId: subasta.vendedorId,
   };
 }
 
