@@ -12,7 +12,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (nombre: string, email: string, password: string) => Promise<void>;
+  register: (nombre: string, email: string, password: string, telefono: string) => Promise<void>;
   logout: () => Promise<void>;
   isAdmin: () => boolean;
   isSeller: () => boolean;
@@ -62,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const handleRegister = useCallback(async (nombre: string, email: string, password: string) => {
-    await authService.register({ nombre, email, password });
+  const handleRegister = useCallback(async (nombre: string, email: string, password: string, telefono: string) => {
+    await authService.register({ nombre, email, password, telefono });
   }, []);
 
   const handleLogout = useCallback(async () => {

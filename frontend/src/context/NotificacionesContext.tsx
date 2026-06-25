@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Notification } from '../types';
 import * as notificacionService from '../services/notificacionService';
+import { useAuth } from './AuthContext';
 
 interface NotificacionesState {
   notifications: Notification[];
@@ -13,6 +14,7 @@ interface NotificacionesState {
 const NotificacionesContext = createContext<NotificacionesState | null>(null);
 
 export function NotificacionesProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const cargar = useCallback(async () => {
@@ -24,7 +26,11 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { cargar(); }, [cargar]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      cargar();
+    }
+  }, [isAuthenticated, cargar]);
 
   const marcarLeida = useCallback(async (id: number) => {
     await notificacionService.marcarLeida(id);
