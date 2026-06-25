@@ -25,3 +25,8 @@ export async function obtenerPujasPorSubasta(subastaId: string | number, page = 
   const { data } = await api.get<PaginatedResponse<PujaBackend>>(`/api/pujas/subasta/${subastaId}?page=${page}&size=${size}`);
   return data.content.map(mapPujaToBid);
 }
+
+export async function obtenerMiPosicion(subastaId: string | number): Promise<number> {
+  const { data } = await api.get<{ posicion: number }>(`/api/pujas/subasta/${subastaId}/mi-posicion`);
+  return data.posicion;
+}

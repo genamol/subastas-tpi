@@ -43,7 +43,7 @@ export default function MisSubastasPage() {
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${auc.estado === 'ACTIVA' ? 'bg-emerald-500/10 text-emerald-400' : auc.estado === 'BORRADOR' ? 'bg-amber-500/10 text-amber-400' : 'bg-input text-text-muted'}`}>
                       {auc.estado}
                     </span>
-                    <span>${auc.currentPrice.toLocaleString('es-ES')}</span>
+                    <span>${(auc.currentPrice ?? 0).toLocaleString('es-ES')}</span>
                     <span>{auc.bidsCount} pujas</span>
                   </div>
                 </div>

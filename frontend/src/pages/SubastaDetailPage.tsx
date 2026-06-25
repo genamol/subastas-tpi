@@ -18,7 +18,7 @@ const formatDate = (isoString: string) => {
 export default function SubastaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState('');
@@ -113,7 +113,7 @@ export default function SubastaDetailPage() {
   const handleCancelar = async () => {
     if (!id) return;
     try {
-      await subastaService.cancelarSubasta(Number(id));
+      await subastaService.cancelarSubastaAdmin(Number(id));
       const updated = await subastaService.obtenerSubasta(id);
       setAuction(updated);
     } catch { /* error */ }
@@ -167,7 +167,7 @@ export default function SubastaDetailPage() {
             <Megaphone className="h-3.5 w-3.5" />Publicar
           </button>
         )}
-        {isAuthenticated && (auction.estado === 'PUBLICADA' || auction.estado === 'ACTIVA') && (
+        {isAdmin() && auction.estado !== 'CANCELADA' && auction.estado !== 'FINALIZADA' && auction.estado !== 'ADJUDICADA' && (
           <button onClick={handleCancelar} className="ml-auto flex items-center gap-1 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-400 transition">
             <Ban className="h-3.5 w-3.5" />Cancelar
           </button>

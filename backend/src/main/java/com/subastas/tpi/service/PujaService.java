@@ -12,4 +12,6 @@ public interface PujaService {
     Page<PujaResponse> obtenerMisPujas(Long ofertanteId, Pageable pageable);
 
     Page<PujaResponse> obtenerPujasPorSubasta(Long subastaId, Long solicitanteId, boolean esAdmin, Pageable pageable);
+
+    int obtenerMiPosicion(Long subastaId, Long usuarioId);
 }

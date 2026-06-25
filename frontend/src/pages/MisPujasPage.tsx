@@ -1,41 +1,82 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Gavel } from 'lucide-react';
-import { misPujas } from '../services/pujaService';
+import { Gavel, TrendingUp, TrendingDown, Trophy } from 'lucide-react';
+import { misPujas, obtenerMiPosicion } from '../services/pujaService';
 import * as subastaService from '../services/subastaService';
-import type { Bid, Auction } from '../types';
+import type { Auction } from '../types';
+
+interface SubastaResumen {
+  subastaId: string;
+  auction: Auction | null;
+  miMejorPuja: number;
+  totalMisPujas: number;
+  posicion: number;
+}
+
+type Filtro = 'all' | 'ganando' | 'perdiendo';
 
 export default function MisPujasPage() {
   const navigate = useNavigate();
-  const [bids, setBids] = useState<Bid[]>([]);
-  const [auctions, setAuctions] = useState<Map<string, Auction>>(new Map());
+  const [items, setItems] = useState<SubastaResumen[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'winning' | 'outbid'>('all');
+  const [filtro, setFiltro] = useState<Filtro>('all');
 
   useEffect(() => {
-    misPujas()
-      .then(async (result) => {
-        setBids(result.items);
-        const auctionMap = new Map<string, Auction>();
-        await Promise.all(result.items.map(async (bid) => {
-          try {
-            const auction = await subastaService.obtenerSubasta(bid.auctionId);
-            auctionMap.set(bid.auctionId, auction);
-          } catch { /* subasta no encontrada */ }
-        }));
-        setAuctions(auctionMap);
+    misPujas(0, 200)
+      .then(async result => {
+        // Agrupar pujas por subastaId
+        const mapa = new Map<string, { bids: typeof result.items }>();
+        for (const bid of result.items) {
+          const key = bid.auctionId;
+          if (!mapa.has(key)) mapa.set(key, { bids: [] });
+          mapa.get(key)!.bids.push(bid);
+        }
+
+        // Para cada subasta única, cargar detalles y posición en paralelo
+        const resúmenes = await Promise.all(
+          Array.from(mapa.entries()).map(async ([subastaId, { bids }]) => {
+            const miMejorPuja = Math.max(...bids.map(b => b.amount));
+            const totalMisPujas = bids.length;
+
+            const [auction, posicion] = await Promise.allSettled([
+              subastaService.obtenerSubasta(subastaId),
+              obtenerMiPosicion(subastaId),
+            ]);
+
+            return {
+              subastaId,
+              auction: auction.status === 'fulfilled' ? auction.value : null,
+              miMejorPuja,
+              totalMisPujas,
+              posicion: posicion.status === 'fulfilled' ? posicion.value : 0,
+            } satisfies SubastaResumen;
+          })
+        );
+
+        // Ordenar: ganando primero, luego por posición
+        resúmenes.sort((a, b) => {
+          const aGanando = a.posicion === 1;
+          const bGanando = b.posicion === 1;
+          if (aGanando && !bGanando) return -1;
+          if (!aGanando && bGanando) return 1;
+          return a.posicion - b.posicion;
+        });
+
+        setItems(resúmenes);
       })
       .catch(() => setError('No se pudieron cargar tus pujas'))
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredBids = bids.filter(bid => {
-    if (filter === 'all') return true;
-    const auction = auctions.get(bid.auctionId);
-    const isWinning = auction ? bid.amount >= auction.currentPrice : false;
-    return filter === 'winning' ? isWinning : !isWinning;
+  const filtrados = items.filter(item => {
+    if (filtro === 'ganando') return item.posicion === 1;
+    if (filtro === 'perdiendo') return item.posicion !== 1;
+    return true;
   });
+
+  const ganando = items.filter(i => i.posicion === 1).length;
+  const perdiendo = items.filter(i => i.posicion !== 1 && i.posicion > 0).length;
 
   if (loading) {
     return (
@@ -49,7 +90,7 @@ export default function MisPujasPage() {
   if (error) {
     return (
       <div className="py-20 text-center">
-        <Award className="h-10 w-10 text-text-secondary/60 mx-auto mb-3" />
+        <Gavel className="h-10 w-10 text-text-secondary/60 mx-auto mb-3" />
         <span className="block text-text-muted text-sm">{error}</span>
       </div>
     );
@@ -57,64 +98,122 @@ export default function MisPujasPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center space-x-3">
-          <h3 className="font-display text-lg font-bold text-text-primary uppercase tracking-wide">Tus Pujas</h3>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h3 className="font-display text-lg font-bold text-text-primary uppercase tracking-wide">Mis Pujas</h3>
           <span className="px-2.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold rounded-lg">
-            {bids.length} {bids.length === 1 ? 'puja' : 'pujas'}
+            {items.length} {items.length === 1 ? 'subasta' : 'subastas'}
           </span>
+          {ganando > 0 && (
+            <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold rounded-lg flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />{ganando} ganando
+            </span>
+          )}
+          {perdiendo > 0 && (
+            <span className="px-2.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-bold rounded-lg flex items-center gap-1">
+              <TrendingDown className="h-3 w-3" />{perdiendo} superado
+            </span>
+          )}
         </div>
         <div className="flex gap-1 rounded-xl bg-input border border-border p-0.5">
-          {(['all', 'winning', 'outbid'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1 rounded-lg text-[11px] font-bold ${filter === f ? 'bg-amber-500 text-black' : 'text-text-muted hover:text-text-primary'}`}>
-              {f === 'all' ? 'Todas' : f === 'winning' ? 'Ganando' : 'Superado'}
+          {(['all', 'ganando', 'perdiendo'] as Filtro[]).map(f => (
+            <button key={f} onClick={() => setFiltro(f)}
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-colors ${filtro === f ? 'bg-amber-500 text-black' : 'text-text-muted hover:text-text-primary'}`}>
+              {f === 'all' ? 'Todas' : f === 'ganando' ? 'Ganando' : 'Superado'}
             </button>
           ))}
         </div>
       </div>
 
-      {filteredBids.length === 0 ? (
+      {filtrados.length === 0 ? (
         <div className="py-20 text-center rounded-2xl border border-dashed border-border">
-          <Award className="h-10 w-10 text-text-secondary/60 mx-auto mb-3" />
-          <span className="block text-text-muted text-sm">{filter !== 'all' ? 'No tenés pujas en esta categoría' : 'Aún no has ofertado'}</span>
-          <button onClick={() => navigate('/catalogo')} className="mt-4 bg-amber-500 text-black px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-400 transition-colors">Explorar Catálogo</button>
+          <Gavel className="h-10 w-10 text-text-secondary/60 mx-auto mb-3" />
+          <span className="block text-text-muted text-sm">
+            {filtro !== 'all' ? 'No tenés pujas en esta categoría' : 'Aún no realizaste ninguna puja'}
+          </span>
+          <button onClick={() => navigate('/catalogo')}
+            className="mt-4 bg-amber-500 text-black px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-400 transition-colors">
+            Explorar Catálogo
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredBids.map(bid => {
-            const auction = auctions.get(bid.auctionId);
-            const isWinning = auction ? bid.amount >= auction.currentPrice : false;
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtrados.map(item => {
+            const ganando = item.posicion === 1;
+            const currentPrice = item.auction?.currentPrice ?? 0;
+            const diferencia = currentPrice - item.miMejorPuja;
+
             return (
-              <div key={bid.id}
-                className={`relative rounded-2xl border p-4 bg-surface overflow-hidden cursor-pointer hover:border-amber-500/30 transition-all ${isWinning ? 'border-emerald-500/20' : 'border-rose-500/20'}`}
-                onClick={() => navigate(`/subastas/${bid.auctionId}`)}
-              >
-                <div className="absolute top-3 right-3">
-                  <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${isWinning ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                    {isWinning ? 'GANANDO' : 'SUPERADO'}
+              <div key={item.subastaId}
+                onClick={() => navigate(`/subastas/${item.subastaId}`)}
+                className={`relative rounded-2xl border bg-surface p-4 cursor-pointer hover:border-amber-500/30 transition-all group ${ganando ? 'border-emerald-500/30' : 'border-rose-500/20'}`}>
+
+                {/* Badge posición */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                  {ganando && <Trophy className="h-3.5 w-3.5 text-amber-400" />}
+                  <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${ganando ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                    {ganando ? '¡GANANDO!' : `PUESTO #${item.posicion > 0 ? item.posicion : '?'}`}
                   </span>
                 </div>
-                <span className="text-[10px] text-text-muted block uppercase font-mono tracking-wider">Subasta #{bid.auctionId}</span>
-                <h4 className="font-bold text-sm text-text-primary mt-1 line-clamp-1">
-                  {auction?.title ?? `Subasta #${bid.auctionId}`}
-                </h4>
-                <div className="flex items-center justify-between border-t border-border/60 pt-3 mt-4 text-xs">
-                  <div>
-                    <span className="block text-[9px] text-text-muted uppercase">Tu Puja</span>
-                    <span className="font-mono font-extrabold text-amber-400">${bid.amount.toLocaleString('es-ES')}</span>
+
+                {/* Imagen + título */}
+                <div className="flex items-start gap-3 pr-24 mb-3">
+                  {item.auction?.image ? (
+                    <img src={item.auction.image} alt="" className="h-12 w-12 rounded-xl object-cover flex-shrink-0 border border-border" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-xl bg-input flex-shrink-0 border border-border" />
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm text-text-primary line-clamp-1 group-hover:text-amber-400 transition-colors">
+                      {item.auction?.title ?? `Subasta #${item.subastaId}`}
+                    </h4>
+                    <p className="text-[10px] text-text-muted mt-0.5">
+                      {item.totalMisPujas} {item.totalMisPujas === 1 ? 'puja realizada' : 'pujas realizadas'}
+                    </p>
                   </div>
+                </div>
+
+                {/* Precios */}
+                <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-3 text-xs">
                   <div>
-                    <span className="block text-[9px] text-text-muted uppercase text-right">Oferta Actual</span>
-                    <span className="font-mono font-bold text-text-primary block text-right">
-                      ${auction?.currentPrice.toLocaleString('es-ES') ?? bid.amount.toLocaleString('es-ES')}
+                    <span className="block text-[9px] text-text-muted uppercase tracking-wider mb-0.5">Mi mejor puja</span>
+                    <span className="font-mono font-extrabold text-amber-400 text-sm">
+                      ${item.miMejorPuja.toLocaleString('es-ES')}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-[9px] text-text-muted uppercase tracking-wider mb-0.5">Precio actual</span>
+                    <span className={`font-mono font-bold text-sm ${ganando ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      ${currentPrice.toLocaleString('es-ES')}
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 flex gap-2">
-                  <button className="flex-1 bg-input border border-border hover:bg-input py-2 rounded-xl text-xs text-text-primary font-bold transition-all">Ver Detalle</button>
-                  {!isWinning && (
-                    <button onClick={(e) => { e.stopPropagation(); navigate(`/subastas/${bid.auctionId}`); }} className="px-3 bg-amber-500 hover:bg-amber-400 text-black py-2 rounded-xl text-xs font-bold flex items-center space-x-1">
-                      <Gavel className="h-3.5 w-3.5" /><span>Superar</span>
+
+                {/* Diferencia / estado */}
+                {!ganando && diferencia > 0 && (
+                  <div className="mt-2 flex items-center gap-1 text-[10px] text-rose-400">
+                    <TrendingDown className="h-3 w-3" />
+                    <span>Te superaron por <strong>${diferencia.toLocaleString('es-ES')}</strong></span>
+                  </div>
+                )}
+                {ganando && (
+                  <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-400">
+                    <TrendingUp className="h-3 w-3" />
+                    <span>Tenés la oferta más alta</span>
+                  </div>
+                )}
+
+                {/* Acciones */}
+                <div className="mt-3 flex gap-2">
+                  <button className="flex-1 bg-input border border-border py-2 rounded-xl text-xs text-text-primary font-bold hover:text-amber-400 transition-colors">
+                    Ver Detalle
+                  </button>
+                  {!ganando && item.auction?.estado === 'ACTIVA' && (
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/subastas/${item.subastaId}`); }}
+                      className="px-3 bg-amber-500 hover:bg-amber-400 text-black py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors">
+                      <Gavel className="h-3.5 w-3.5" /> Superar
                     </button>
                   )}
                 </div>
