@@ -279,7 +279,7 @@ export default function SubastaDetailPage() {
             <form onSubmit={handleSubmitDisputa} className="mt-4 space-y-3 text-xs">
               <div>
                 <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Motivo:</label>
-                <select
+                <select aria-label="Motivo de la disputa"
                   value={disputeMotive}
                   onChange={(e) => setDisputeMotive(e.target.value as typeof disputeMotive)}
                   className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none"

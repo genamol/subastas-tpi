@@ -113,7 +113,7 @@ export default function LoginPage() {
               to="/demo"
               className="block w-full rounded-xl border border-border bg-input py-2.5 text-center text-xs font-medium text-text-muted hover:text-text-primary hover:border-border transition"
             >
-              Ver demo sin registrarse
+              Entra! a ver que hay...
             </Link>
           </div>
         </form>
