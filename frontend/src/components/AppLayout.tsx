@@ -40,7 +40,7 @@ export default function AppLayout() {
   const tabs = [
     { id: '/catalogo', label: 'Catálogo', icon: LayoutDashboard },
     { id: '/mis-pujas', label: 'Mis Ofertas', icon: Award },
-    { id: '/mis-subastas', label: 'Publicaciones', icon: Package },
+    { id: '/mis-subastas', label: 'Mis Publicaciones', icon: Package },
     { id: '/crear', label: 'Publicar', icon: PlusCircle },
     ...(isAdmin() ? [{ id: '/admin', label: 'Admin', icon: Shield }] : []),
   ];

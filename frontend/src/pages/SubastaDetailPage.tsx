@@ -38,6 +38,7 @@ export default function SubastaDetailPage() {
     subastaService.obtenerSubasta(id)
       .then(a => {
         setAuction(a);
+        setBidAmount(String(a.currentPrice + a.minIncrement));
         return pujaService.obtenerPujasPorSubasta(id);
       })
       .then(bids => setAuction(prev => prev ? { ...prev, bids } : prev))
