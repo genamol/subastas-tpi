@@ -42,4 +42,10 @@ public class DisputaController {
                                                              Pageable pageable) {
         return ResponseEntity.ok(disputaService.obtenerPorSubasta(subastaId, pageable));
     }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<DisputaResponse>> listarTodas(Pageable pageable) {
+        return ResponseEntity.ok(disputaService.obtenerTodas(pageable));
+    }
 }

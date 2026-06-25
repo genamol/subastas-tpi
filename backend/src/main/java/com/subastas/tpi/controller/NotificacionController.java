@@ -34,4 +34,10 @@ public class NotificacionController {
     public ResponseEntity<Long> contarNoLeidas(@AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.ok(notificacionService.contarNoLeidas(usuario.getId()));
     }
+
+    @PutMapping("/leer-todas")
+    public ResponseEntity<Void> marcarTodasLeidas(@AuthenticationPrincipal Usuario usuario) {
+        notificacionService.marcarTodasLeidas(usuario.getId());
+        return ResponseEntity.noContent().build();
+    }
 }

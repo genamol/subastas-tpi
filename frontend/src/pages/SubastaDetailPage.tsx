@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Clock, History, Gavel } from 'lucide-react';
+import { ChevronRight, Clock, History, Gavel, AlertTriangle } from 'lucide-react';
 import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
 import * as subastaService from '../services/subastaService';
 import * as pujaService from '../services/pujaService';
+import * as disputaService from '../services/disputaService';
 import { DetailSkeleton } from '../components/Spinner';
 import type { Auction, Bid } from '../types';
 
@@ -32,7 +33,14 @@ export default function SubastaDetailPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    subastaService.obtenerSubasta(id).then(setAuction).finally(() => setLoading(false));
+    subastaService.obtenerSubasta(id)
+      .then(a => {
+        setAuction(a);
+        return pujaService.obtenerPujasPorSubasta(id);
+      })
+      .then(bids => setAuction(prev => prev ? { ...prev, bids } : prev))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [id]);
 
   useSse(
@@ -103,6 +111,24 @@ export default function SubastaDetailPage() {
       } else {
         setBidError('Error de conexión');
       }
+    }
+  };
+
+  const handleSubmitDisputa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    try {
+      await disputaService.abrirDisputa({
+        subastaId: Number(id),
+        tipo: disputeMotive,
+        descripcion: disputeText,
+      });
+      setShowDisputeForm(false);
+      setDisputeText('');
+      setSuccessMessage('Disputa abierta correctamente. Un administrador la revisará.');
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch {
+      setBidError('Error al abrir la disputa. Verificá que la subasta esté adjudicada.');
     }
   };
 
@@ -194,6 +220,69 @@ export default function SubastaDetailPage() {
           </div>
         </div>
       </div>
+
+      {(auction.status === 'finished' || auction.status === 'active') && (
+        <div className="bg-surface border border-border p-5 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <h4 className="font-display font-bold text-sm uppercase tracking-wide text-text-primary">Disputas</h4>
+            </div>
+            {!showDisputeForm && (
+              <button
+                onClick={() => setShowDisputeForm(true)}
+                className="text-xs text-rose-400 hover:text-rose-300 border border-rose-500/20 hover:border-rose-500/40 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Abrir disputa
+              </button>
+            )}
+          </div>
+
+          {showDisputeForm && (
+            <form onSubmit={handleSubmitDisputa} className="mt-4 space-y-3 text-xs">
+              <div>
+                <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Motivo:</label>
+                <select
+                  value={disputeMotive}
+                  onChange={(e) => setDisputeMotive(e.target.value as typeof disputeMotive)}
+                  className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="PRODUCTO_NO_RECIBIDO">Producto no recibido</option>
+                  <option value="FALTA_DE_PAGO">Falta de pago</option>
+                  <option value="FRAUDE">Fraude</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Descripción:</label>
+                <textarea
+                  required
+                  value={disputeText}
+                  onChange={(e) => setDisputeText(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed"
+                  placeholder="Describí el problema detalladamente..."
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-rose-500 hover:bg-rose-400 text-white py-2.5 text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  Confirmar disputa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDisputeForm(false)}
+                  className="px-4 py-2.5 rounded-xl border border-border text-text-secondary hover:text-text-primary text-xs font-bold transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   );
 }

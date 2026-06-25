@@ -32,6 +32,12 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     @Transactional
+    public void marcarTodasLeidas(Long usuarioId) {
+        notificacionRepository.marcarTodasComoLeidas(usuarioId);
+    }
+
+    @Override
+    @Transactional
     public void marcarComoLeida(Long notificacionId, Long usuarioId) {
         Notificacion notificacion = notificacionRepository.findById(notificacionId)
             .orElseThrow(() -> new BusinessException("notificacion.no.encontrada", HttpStatus.NOT_FOUND));

@@ -4,7 +4,7 @@ import { useSubastas } from '../hooks/useSubastas';
 import { useSse } from '../hooks/useSse';
 import { obtenerTicketAdmin } from '../services/sseService';
 import * as adminService from '../services/adminService';
-import api from '../services/api';
+import * as disputaService from '../services/disputaService';
 import { Spinner } from '../components/Spinner';
 import type { Dispute, UserAccount } from '../types';
 
@@ -48,29 +48,17 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    api.get('/api/disputas?page=0&size=50').then(res => {
-      setDisputes(res.data.content.map((d: { id: number; tipo: string; descripcion: string; resolucionAdmin: string | null; fechaCreacion: string; fechaResolucion: string | null; subastaId: number; iniciadorNombre: string }) => ({
-        id: String(d.id),
-        subastaId: String(d.subastaId),
-        subastaTitle: `Subasta #${d.subastaId}`,
-        iniciador: d.iniciadorNombre,
-        motivo: d.tipo as Dispute['motivo'],
-        descripcion: d.descripcion,
-        fechaCreacion: d.fechaCreacion,
-        estado: d.resolucionAdmin ? 'RESUELTA' as const : 'ABIERTA' as const,
-        resolucionAdmin: d.resolucionAdmin ?? undefined,
-        estadoFinalSubasta: undefined,
-        fechaResolucion: d.fechaResolucion ?? undefined,
-      })));
+    disputaService.listarDisputasAdmin(0, 50).then(res => {
+      setDisputes(res.items.map(d => ({ ...d, subastaTitle: `Subasta #${d.subastaId}` })));
       setLoadingDisputes(false);
     }).catch(() => { setLoadingDisputes(false); });
   }, []);
 
   const handleResolveDispute = async (id: string, state: 'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA', resolution: string) => {
     try {
-      await api.put(`/api/disputas/${id}/resolver`, { estadoFinal: state, resolucionAdmin: resolution });
+      await disputaService.resolverDisputa(id, resolution);
       setDisputes(prev => prev.map(d => d.id === id ? { ...d, estado: 'RESUELTA' as const, estadoFinalSubasta: state, resolucionAdmin: resolution } : d));
-      addLog(`[${new Date().toLocaleTimeString()}] Disputa #${id} resuelta como ${state}`);
+      addLog(`[${new Date().toLocaleTimeString()}] Disputa #${id} resuelta`);
     } catch { /* fallback */ }
   };
 
