@@ -19,7 +19,13 @@ export default function CrearSubastaPage() {
   const [newBasePrice, setNewBasePrice] = useState('');
   const [newMinIncrement, setNewMinIncrement] = useState('');
   const [newDescription, setNewDescription] = useState('');
+<<<<<<< HEAD
   const [newDuration, setNewDuration] = useState('10');
+=======
+  const [iniciarAhora, setIniciarAhora] = useState(true);
+  const [fechaInicio, setFechaInicio] = useState(() => formatForInput(new Date(Date.now() + 5 * 60 * 1000)));
+  const [fechaCierre, setFechaCierre] = useState(() => formatForInput(new Date(Date.now() + 60 * 60 * 1000)));
+>>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -54,6 +60,18 @@ export default function CrearSubastaPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+<<<<<<< HEAD
+=======
+
+    const inicioDate = iniciarAhora ? new Date(Date.now() + 5000) : new Date(fechaInicio);
+    const cierreDate = new Date(fechaCierre);
+
+    if (cierreDate <= inicioDate) {
+      setError('La fecha de cierre debe ser posterior a la de inicio.');
+      return;
+    }
+
+>>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
     setSubmitting(true);
     try {
       const duracionMs = parseFloat(newDuration) * 60 * 1000;
@@ -103,16 +121,64 @@ export default function CrearSubastaPage() {
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Título del Artículo:</label>
           <input type="text" required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none" placeholder="ej. iPhone 15 Pro Max impecable caja original" />
         </div>
+<<<<<<< HEAD
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
             <select value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
               {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
+=======
+
+        <div>
+          <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
+          <select value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
+            {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-input px-4 py-3">
+            <span className="font-bold text-text-secondary uppercase tracking-wider">Iniciar ahora</span>
+            <button
+              type="button"
+              onClick={() => setIniciarAhora(v => !v)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${iniciarAhora ? 'bg-amber-500' : 'bg-border'}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${iniciarAhora ? 'translate-x-4' : 'translate-x-1'}`} />
+            </button>
+>>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
           </div>
+
+          {!iniciarAhora && (
+            <div>
+              <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Inicio:</label>
+              <input
+                type="datetime-local"
+                required
+                value={fechaInicio}
+                min={minFechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+          )}
+
           <div>
+<<<<<<< HEAD
             <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Duración (Minutos):</label>
             <input type="number" required value={newDuration} onChange={(e) => setNewDuration(e.target.value)} className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none font-mono" placeholder="10" min="1" />
+=======
+            <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Fecha de Cierre:</label>
+            <input
+              type="datetime-local"
+              required
+              value={fechaCierre}
+              min={iniciarAhora ? minFechaInicio : fechaInicio}
+              onChange={(e) => setFechaCierre(e.target.value)}
+              className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none"
+            />
+>>>>>>> feea98c (iniciar ahora envia fechaInicio +5s para respetar @Future)
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
