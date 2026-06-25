@@ -217,7 +217,7 @@ export default function SubastaDetailPage() {
               <span>Puja rápida: <button onClick={handleQuickBid} className="rounded-lg bg-amber-500 text-black px-2 py-0.5 text-[11px] font-bold hover:bg-amber-400">+${auction.minIncrement}</button></span>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); handleBid(); }} className="space-y-3">
-              <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider">T (ARS):</label>
+              <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tu oferta es de... (ARS):</label>
               <div className="relative">
                 <input type="number" required value={bidAmount} onChange={(e) => setBidAmount(e.target.value)}
                   className="w-full rounded-xl border border-border bg-input p-3 pr-16 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none font-mono"
