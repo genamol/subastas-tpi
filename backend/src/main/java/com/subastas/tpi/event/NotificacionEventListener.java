@@ -18,7 +18,8 @@ public class NotificacionEventListener {
 
     @EventListener
     public void onNuevaPuja(NuevaPujaEvent event) {
-        Notificacion notificacion = notificacionService.notificarVendedorNuevaPuja(Objects.requireNonNull(event.subastaId()));
+        Notificacion notificacion = notificacionService.notificarVendedorNuevaPuja(
+                Objects.requireNonNull(event.subastaId()), event.datos().getMonto());
         eventPublisher.publishEvent(new NotificacionCreadaEvent(notificacion));
     }
 }

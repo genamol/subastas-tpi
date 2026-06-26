@@ -4,13 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { useSse } from '../hooks/useSse';
 import { obtenerTicketNotificaciones } from '../services/sseService';
-import { subirAImgbb } from '../services/imgbbService';
+import { subirImagen } from '../services/imagenService';
 import ThemeToggle from './ThemeToggle';
 import { useState, useRef, useEffect } from 'react';
 
 export default function AppLayout() {
   const { nombre, isAdmin, logout } = useAuth();
-  const { unreadCount, notifications, cargar } = useNotificaciones();
+  const { unreadCount, notifications, cargar, marcarTodasLeidas } = useNotificaciones();
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,6 +18,7 @@ export default function AppLayout() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => localStorage.getItem('foto_perfil'));
 
@@ -25,7 +26,7 @@ export default function AppLayout() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const url = await subirAImgbb(file);
+      const url = await subirImagen(file);
       localStorage.setItem('foto_perfil', url);
       setFotoPerfil(url);
     } catch { /* error */ }
@@ -35,6 +36,9 @@ export default function AppLayout() {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -85,7 +89,7 @@ export default function AppLayout() {
           <div className="flex items-center space-x-2">
             <ThemeToggle />
 
-            <button onClick={() => setShowNotifications(!showNotifications)}
+            <button onClick={() => { if (!showNotifications) marcarTodasLeidas(); setShowNotifications(!showNotifications); }}
               className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-text-secondary hover:text-text-primary transition-colors">
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -158,16 +162,18 @@ export default function AppLayout() {
       )}
 
       {showNotifications && (
-        <div className="absolute top-14 right-4 z-50 w-72 rounded-xl border border-border bg-surface shadow-xl">
+        <div ref={notifRef} className="absolute top-14 right-4 z-50 w-72 rounded-xl border border-border bg-surface shadow-xl">
           <div className="p-3 border-b border-border text-xs font-bold text-text-primary">Notificaciones</div>
           <div className="max-h-64 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="text-xs text-text-muted p-4 text-center">Sin notificaciones</p>
             ) : (
               notifications.slice(0, 10).map(n => (
-                <div key={n.id} className={`px-3 py-2 border-b border-border/50 text-xs ${n.read ? 'text-text-muted' : 'text-text-primary'}`}>
-                  <span className="font-semibold">{n.title}</span>
-                  <p className="text-text-muted mt-0.5">{n.message}</p>
+                <div key={n.id}
+                  onClick={() => { if (n.subastaId) { setShowNotifications(false); navigate(`/subastas/${n.subastaId}`); } }}
+                  className={`px-3 py-2 border-b border-border/50 text-xs cursor-pointer hover:bg-input transition-colors ${n.read ? 'text-text-muted' : 'text-text-primary'}`}>
+                  <p className="leading-snug">{n.message}</p>
+                  {n.subastaId && <span className="text-[10px] text-amber-400 mt-0.5 block">Ver subasta →</span>}
                 </div>
               ))
             )}

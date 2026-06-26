@@ -8,19 +8,31 @@ import com.subastas.tpi.model.enums.TipoNotificacion;
 import com.subastas.tpi.repository.NotificacionRepository;
 import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.service.NotificacionService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+
 @Service
-@RequiredArgsConstructor
 public class NotificacionServiceImpl implements NotificacionService {
 
     private final NotificacionRepository notificacionRepository;
     private final SubastaRepository subastaRepository;
+    private final MessageSource messageSource;
+
+    public NotificacionServiceImpl(NotificacionRepository notificacionRepository,
+                                    SubastaRepository subastaRepository,
+                                    MessageSource messageSource) {
+        this.notificacionRepository = notificacionRepository;
+        this.subastaRepository = subastaRepository;
+        this.messageSource = messageSource;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -58,12 +70,16 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     @Transactional
-    public Notificacion notificarVendedorNuevaPuja(Long subastaId) {
+    public Notificacion notificarVendedorNuevaPuja(Long subastaId, BigDecimal monto) {
         Subasta subasta = subastaRepository.findById(subastaId)
                 .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
 
+        String plantilla = messageSource.getMessage("notificacion.nueva.puja", null,
+                LocaleContextHolder.getLocale());
+        String mensaje = MessageFormat.format(plantilla, "$" + monto, subasta.getProducto().getNombre());
+
         Notificacion notificacion = new Notificacion();
-        notificacion.setMensaje("Nueva puja recibida en tu subasta #" + subastaId);
+        notificacion.setMensaje(mensaje);
         notificacion.setTipo(TipoNotificacion.NUEVA_PUJA);
         notificacion.setDestinatario(subasta.getVendedor());
         notificacion.setSubasta(subasta);

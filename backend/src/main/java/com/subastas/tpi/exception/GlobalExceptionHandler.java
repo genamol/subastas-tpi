@@ -46,7 +46,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.builder()
                         .status(HttpStatus.BAD_REQUEST.value())
-                        .mensaje("Error de validación")
+                        .mensaje(messageSource.getMessage("error.validacion", null,
+                                "Error de validación", LocaleContextHolder.getLocale()))
                         .errores(errores)
                         .timestamp(Instant.now())
                         .build());
@@ -57,7 +58,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.builder()
                         .status(HttpStatus.FORBIDDEN.value())
-                        .mensaje("Acceso denegado")
+                        .mensaje(messageSource.getMessage("error.acceso.denegado", null,
+                                "Acceso denegado", LocaleContextHolder.getLocale()))
                         .timestamp(Instant.now())
                         .build());
     }
@@ -67,7 +69,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.builder()
                         .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                        .mensaje("Error interno del servidor")
+                        .mensaje(messageSource.getMessage("error.interno", null,
+                                "Error interno del servidor", LocaleContextHolder.getLocale()))
                         .timestamp(Instant.now())
                         .build());
     }
