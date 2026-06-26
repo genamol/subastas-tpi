@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Gavel, TrendingUp, TrendingDown, Trophy } from 'lucide-react';
 import { misPujas, obtenerMiPosicion } from '../services/pujaService';
 import * as subastaService from '../services/subastaService';
+import { useSse } from '../hooks/useSse';
+import { obtenerTicketNotificaciones } from '../services/sseService';
 import type { Auction } from '../types';
 
 interface SubastaResumen {
@@ -22,52 +24,47 @@ export default function MisPujasPage() {
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<Filtro>('all');
 
-  useEffect(() => {
-    misPujas(0, 200)
-      .then(async result => {
-        // Agrupar pujas por subastaId
-        const mapa = new Map<string, { bids: typeof result.items }>();
-        for (const bid of result.items) {
-          const key = bid.auctionId;
-          if (!mapa.has(key)) mapa.set(key, { bids: [] });
-          mapa.get(key)!.bids.push(bid);
-        }
-
-        // Para cada subasta única, cargar detalles y posición en paralelo
-        const resúmenes = await Promise.all(
-          Array.from(mapa.entries()).map(async ([subastaId, { bids }]) => {
-            const miMejorPuja = Math.max(...bids.map(b => b.amount));
-            const totalMisPujas = bids.length;
-
-            const [auction, posicion] = await Promise.allSettled([
-              subastaService.obtenerSubasta(subastaId),
-              obtenerMiPosicion(subastaId),
-            ]);
-
-            return {
-              subastaId,
-              auction: auction.status === 'fulfilled' ? auction.value : null,
-              miMejorPuja,
-              totalMisPujas,
-              posicion: posicion.status === 'fulfilled' ? posicion.value : 0,
-            } satisfies SubastaResumen;
-          })
-        );
-
-        // Ordenar: ganando primero, luego por posición
-        resúmenes.sort((a, b) => {
-          const aGanando = a.posicion === 1;
-          const bGanando = b.posicion === 1;
-          if (aGanando && !bGanando) return -1;
-          if (!aGanando && bGanando) return 1;
-          return a.posicion - b.posicion;
-        });
-
-        setItems(resúmenes);
+  const cargarPujas = async () => {
+    const result = await misPujas(0, 200);
+    const mapa = new Map<string, { bids: typeof result.items }>();
+    for (const bid of result.items) {
+      const key = bid.auctionId;
+      if (!mapa.has(key)) mapa.set(key, { bids: [] });
+      mapa.get(key)!.bids.push(bid);
+    }
+    const resúmenes = await Promise.all(
+      Array.from(mapa.entries()).map(async ([subastaId, { bids }]) => {
+        const miMejorPuja = Math.max(...bids.map(b => b.amount));
+        const totalMisPujas = bids.length;
+        const [auction, posicion] = await Promise.allSettled([
+          subastaService.obtenerSubasta(subastaId),
+          obtenerMiPosicion(subastaId),
+        ]);
+        return {
+          subastaId, miMejorPuja, totalMisPujas,
+          auction: auction.status === 'fulfilled' ? auction.value : null,
+          posicion: posicion.status === 'fulfilled' ? posicion.value : 0,
+        } satisfies SubastaResumen;
       })
+    );
+    resúmenes.sort((a, b) => {
+      const aG = a.posicion === 1, bG = b.posicion === 1;
+      if (aG && !bG) return -1;
+      if (!aG && bG) return 1;
+      return a.posicion - b.posicion;
+    });
+    setItems(resúmenes);
+  };
+
+  useEffect(() => {
+    cargarPujas()
       .catch(() => setError('No se pudieron cargar tus pujas'))
       .finally(() => setLoading(false));
   }, []);
+
+  useSse(obtenerTicketNotificaciones, '/api/notificaciones/stream', {
+    'notificacion-nueva': () => { cargarPujas(); },
+  });
 
   const filtrados = items.filter(item => {
     if (filtro === 'ganando') return item.posicion === 1;
