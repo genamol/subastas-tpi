@@ -54,12 +54,7 @@ public class ImagenController {
             throw new BusinessException("imagen.formato.invalido", HttpStatus.BAD_REQUEST);
         }
 
-        String original = file.getOriginalFilename();
-        String ext = "";
-        if (original != null && original.contains(".")) {
-            ext = original.substring(original.lastIndexOf("."));
-        }
-        String nombre = UUID.randomUUID() + ext;
+        String nombre = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
         if (endpoint != null && !endpoint.isEmpty()) {
             return uploadS3(file, nombre, contentType);
