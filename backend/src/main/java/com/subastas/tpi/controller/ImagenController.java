@@ -36,8 +36,8 @@ public class ImagenController {
     @Value("${storage.s3.secret-key}")
     private String secretKey;
 
-    public ImagenController(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public ImagenController() {
+        this.restTemplate = new RestTemplate();
     }
 
     @PostMapping("/upload")

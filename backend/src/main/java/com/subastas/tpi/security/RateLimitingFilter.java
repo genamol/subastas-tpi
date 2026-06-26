@@ -27,7 +27,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         "POST:/api/auth/register", 5,
         "POST:/api/auth/refresh", 20,
         "POST:/api/pujas", 30,
-        "POST:/api/tickets", 10
+        "POST:/api/tickets", 10,
+        "POST:/api/productos", 10,
+        "POST:/api/subastas", 10,
+        "POST:/api/disputas", 5,
+        "POST:/api/imagenes/upload", 10
     );
 
     // Referencia al JwtService para resolver userId en endpoints privados
