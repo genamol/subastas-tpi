@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -126,10 +125,9 @@ public class PujaServiceImpl implements PujaService {
     @Override
     @Transactional(readOnly = true)
     public int obtenerMiPosicion(Long subastaId, Long usuarioId) {
-        Optional<BigDecimal> miMejorMonto = pujaRepository.findMejorMonto(subastaId, usuarioId);
-        if (miMejorMonto.isEmpty()) return 0;
-        long biddersDelante = pujaRepository.countBiddersAheadOf(subastaId, usuarioId, miMejorMonto.get());
-        return (int) biddersDelante + 1;
+        return pujaRepository.findMejorMonto(subastaId, usuarioId)
+                .map(monto -> (int) pujaRepository.countBiddersAheadOf(subastaId, usuarioId, monto) + 1)
+                .orElse(0);
     }
 
     private PujaResponse mapToResponse(Puja puja, boolean verIdentidad) {

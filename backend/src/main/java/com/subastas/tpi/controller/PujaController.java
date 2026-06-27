@@ -1,6 +1,7 @@
 package com.subastas.tpi.controller;
 
 import com.subastas.tpi.dto.request.PujaRequest;
+import com.subastas.tpi.dto.response.PosicionResponse;
 import com.subastas.tpi.dto.response.PujaResponse;
 import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.service.PujaService;
@@ -12,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pujas")
@@ -45,9 +44,9 @@ public class PujaController {
     }
 
     @GetMapping("/subasta/{subastaId}/mi-posicion")
-    public ResponseEntity<Map<String, Integer>> miPosicion(@PathVariable Long subastaId,
-                                                            @AuthenticationPrincipal Usuario usuario) {
+    public ResponseEntity<PosicionResponse> miPosicion(@PathVariable Long subastaId,
+                                                             @AuthenticationPrincipal Usuario usuario) {
         int posicion = pujaService.obtenerMiPosicion(subastaId, usuario.getId());
-        return ResponseEntity.ok(Map.of("posicion", posicion));
+        return ResponseEntity.ok(new PosicionResponse(posicion));
     }
 }

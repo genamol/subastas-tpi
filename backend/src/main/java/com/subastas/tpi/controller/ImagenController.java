@@ -1,5 +1,6 @@
 package com.subastas.tpi.controller;
 
+import com.subastas.tpi.dto.response.ImagenResponse;
 import com.subastas.tpi.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,7 +44,7 @@ public class ImagenController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> upload(@RequestParam MultipartFile file) throws IOException {
+    public ResponseEntity<ImagenResponse> upload(@RequestParam MultipartFile file) throws IOException {
         if (file.getSize() > MAX_SIZE) {
             throw new BusinessException("imagen.tamano.excedido", HttpStatus.BAD_REQUEST);
         }
@@ -62,7 +62,7 @@ public class ImagenController {
         return uploadLocal(file, nombre);
     }
 
-    private ResponseEntity<Map<String, String>> uploadS3(MultipartFile file, String nombre, String contentType) throws IOException {
+    private ResponseEntity<ImagenResponse> uploadS3(MultipartFile file, String nombre, String contentType) throws IOException {
         String s3Url = endpoint + "/" + bucket + "/" + nombre;
 
         HttpHeaders headers = new HttpHeaders();
@@ -77,15 +77,15 @@ public class ImagenController {
             throw new BusinessException("imagen.error.upload", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        return ResponseEntity.ok(Map.of("url", s3Url));
+        return ResponseEntity.ok(new ImagenResponse(s3Url));
     }
 
-    private ResponseEntity<Map<String, String>> uploadLocal(MultipartFile file, String nombre) throws IOException {
+    private ResponseEntity<ImagenResponse> uploadLocal(MultipartFile file, String nombre) throws IOException {
         Path dir = Paths.get("uploads");
         Files.createDirectories(dir);
         Path ruta = dir.resolve(nombre);
         Files.copy(file.getInputStream(), ruta);
 
-        return ResponseEntity.ok(Map.of("url", "/uploads/" + nombre));
+        return ResponseEntity.ok(new ImagenResponse("/uploads/" + nombre));
     }
 }

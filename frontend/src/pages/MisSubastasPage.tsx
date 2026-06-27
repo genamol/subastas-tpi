@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Package } from 'lucide-react';
 import * as subastaService from '../services/subastaService';
+import { useSse } from '../hooks/useSse';
+import { obtenerTicketNotificaciones } from '../services/sseService';
 import type { Auction } from '../types';
 
 export default function MisSubastasPage() {
@@ -9,9 +11,15 @@ export default function MisSubastasPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const cargar = useCallback(async () => {
     subastaService.misSubastas().then(r => setSubastas(r.items)).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  useSse(obtenerTicketNotificaciones, '/api/notificaciones/stream', {
+    'notificacion-nueva': () => { cargar(); },
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
