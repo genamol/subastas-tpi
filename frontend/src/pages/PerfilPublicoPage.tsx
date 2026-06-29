@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Gavel, Package, Star, ChevronLeft } from 'lucide-react';
 import { obtenerPerfilPublico, type UsuarioPublico } from '../services/usuarioService';
 import { obtenerCalificacionesPorUsuario, type CalificacionResponse } from '../services/calificacionService';
-import { censorName, AVATARES, getAvatarForUser } from '../utils/privacidad';
+import { censorName } from '../utils/privacidad';
+import { getAvatarAnimado } from '../components/AvatarAnimado';
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   ADMIN:  { label: 'Administrador', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
@@ -44,9 +45,8 @@ export default function PerfilPublicoPage() {
     return <div className="py-20 text-center text-text-muted text-sm">Usuario no encontrado.</div>;
   }
 
-  const avatarIdx = getAvatarForUser(perfil.id);
-  const avatarColor = AVATARES[avatarIdx]?.bg ?? '#F59E0B';
-  const inicial = perfil.nombre.charAt(0).toUpperCase();
+  const avatarInfo = getAvatarAnimado(perfil.id);
+  const PublicAvatarComp = avatarInfo.Component;
   const nombreCensurado = censorName(perfil.nombre);
   const promedio = calificaciones.length > 0
     ? (calificaciones.reduce((s, c) => s + c.puntuacion, 0) / calificaciones.length).toFixed(1)
@@ -61,11 +61,8 @@ export default function PerfilPublicoPage() {
 
       {/* Header */}
       <div className="bg-surface border border-border rounded-2xl p-6 flex items-center gap-5">
-        <div
-          className="h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg select-none flex-shrink-0"
-          style={{ backgroundColor: avatarColor }}
-        >
-          {inicial}
+        <div className="flex-shrink-0">
+          <PublicAvatarComp size={80} />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="font-display text-xl font-bold text-text-primary truncate">{nombreCensurado}</h2>

@@ -3,7 +3,8 @@ import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X, Star } fr
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { obtenerCalificacionesPorUsuario, type CalificacionResponse } from '../services/calificacionService';
-import { AVATARES, getAvatar } from '../utils/privacidad';
+import { getAvatar, setAvatar } from '../utils/privacidad';
+import { AVATARES_ANIMADOS, getAvatarAnimado } from '../components/AvatarAnimado';
 
 interface PerfilData {
   id: number;
@@ -22,23 +23,6 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   USER:   { label: 'Usuario',       color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
 
-function AvatarDisplay({ nombre }: { nombre: string }) {
-  const idx = getAvatar();
-  const color = AVATARES[idx]?.bg ?? '#F59E0B';
-  const parts = nombre.trim().split(' ');
-  const ini = (parts.length >= 2
-    ? parts[0][0] + parts[1][0]
-    : parts[0].slice(0, 2)).toUpperCase();
-  return (
-    <div
-      className="h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg select-none flex-shrink-0"
-      style={{ backgroundColor: color }}
-    >
-      {ini}
-    </div>
-  );
-}
-
 export default function PerfilPage() {
   const { nombre: nombreCtx } = useAuth();
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
@@ -51,6 +35,7 @@ export default function PerfilPage() {
   const [saveOk, setSaveOk] = useState(false);
   const [calificaciones, setCalificaciones] = useState<CalificacionResponse[]>([]);
   const [loadingCalif, setLoadingCalif] = useState(false);
+  const [avatarIdx, setAvatarIdx] = useState<number>(getAvatar);
 
   useEffect(() => {
     api.get<PerfilData>('/api/usuarios/me')
@@ -64,6 +49,11 @@ export default function PerfilPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSelectAvatar = (idx: number) => {
+    setAvatar(idx);
+    setAvatarIdx(idx);
+  };
 
   const handleEdit = () => {
     if (!perfil) return;
@@ -109,6 +99,9 @@ export default function PerfilPage() {
     return <div className="py-20 text-center text-text-muted text-sm">No se pudo cargar el perfil.</div>;
   }
 
+  const currentAvatar = getAvatarAnimado(avatarIdx);
+  const CurrentAvatarComp = currentAvatar.Component;
+
   return (
     <div className="max-w-2xl mx-auto space-y-4 animate-fade-in">
 
@@ -120,7 +113,9 @@ export default function PerfilPage() {
 
       {/* Header */}
       <div className="bg-surface border border-border rounded-2xl p-6 flex items-center gap-5">
-        <AvatarDisplay nombre={perfil.nombre} />
+        <div className="flex-shrink-0">
+          <CurrentAvatarComp size={80} />
+        </div>
         <div className="flex-1 min-w-0">
           <h2 className="font-display text-xl font-bold text-text-primary truncate">{perfil.nombre}</h2>
           <p className="text-xs text-text-muted mt-0.5">{perfil.email}</p>
@@ -140,6 +135,40 @@ export default function PerfilPage() {
             <Edit2 className="h-3.5 w-3.5" /> Editar
           </button>
         )}
+      </div>
+
+      {/* Avatar picker */}
+      <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-text-primary border-b border-border pb-2">
+          Mi Avatar
+        </h3>
+        <p className="text-xs text-text-muted">Elegí tu personaje de subasta. ¡Cada uno tiene su propia personalidad!</p>
+        <div className="grid grid-cols-4 gap-3">
+          {AVATARES_ANIMADOS.map(av => {
+            const Comp = av.Component;
+            const isSelected = avatarIdx === av.id;
+            return (
+              <button
+                key={av.id}
+                onClick={() => handleSelectAvatar(av.id)}
+                title={av.nombre}
+                className={`group flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all border ${
+                  isSelected
+                    ? 'border-amber-500 bg-amber-500/10 shadow-md shadow-amber-500/10'
+                    : 'border-border hover:border-amber-500/40 hover:bg-input'
+                }`}
+              >
+                <Comp size={64} />
+                <span className={`text-[10px] font-bold text-center leading-tight truncate w-full ${
+                  isSelected ? 'text-amber-400' : 'text-text-muted group-hover:text-text-secondary'
+                }`}>
+                  {av.nombre}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-text-muted italic text-center">{currentAvatar.descripcion}</p>
       </div>
 
       {/* Stats */}

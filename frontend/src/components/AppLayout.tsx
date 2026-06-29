@@ -1,12 +1,13 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package, User, ChevronDown, ChevronUp } from 'lucide-react';
+import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { useSse } from '../hooks/useSse';
 import { obtenerTicketNotificaciones } from '../services/sseService';
 import ThemeToggle from './ThemeToggle';
 import { useState, useRef, useEffect } from 'react';
-import { AVATARES, getAvatar, setAvatar, censorName } from '../utils/privacidad';
+import { getAvatar, censorName } from '../utils/privacidad';
+import { getAvatarAnimado } from './AvatarAnimado';
 
 export default function AppLayout() {
   const { nombre, isAdmin, logout } = useAuth();
@@ -15,24 +16,23 @@ export default function AppLayout() {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const [avatarIdx, setAvatarIdx] = useState<number>(getAvatar);
 
-  const handleSelectAvatar = (idx: number) => {
-    setAvatar(idx);
-    setAvatarIdx(idx);
-    setShowAvatarPicker(false);
-  };
+  // Re-sync avatar when user navigates back from PerfilPage (localStorage may have changed)
+  useEffect(() => {
+    const onFocus = () => setAvatarIdx(getAvatar());
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false);
-        setShowAvatarPicker(false);
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
@@ -59,8 +59,8 @@ export default function AppLayout() {
     ...(isAdmin() ? [{ id: '/admin', label: 'Admin', icon: Shield }] : []),
   ];
 
-  const avatarColor = AVATARES[avatarIdx]?.bg ?? '#F59E0B';
-  const inicial = (nombre ?? 'U').charAt(0).toUpperCase();
+  const avatarInfo = getAvatarAnimado(avatarIdx);
+  const AvatarComp = avatarInfo.Component;
   const nombreCensurado = nombre ? censorName(nombre) : '';
 
   return (
@@ -102,51 +102,18 @@ export default function AppLayout() {
 
             <div className="relative" ref={userMenuRef}>
               <button
-                onClick={() => { setShowUserMenu(v => !v); setShowAvatarPicker(false); }}
-                className="flex items-center gap-2 h-9 px-3 rounded-xl border border-border bg-surface text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-colors"
+                onClick={() => setShowUserMenu(v => !v)}
+                className="flex items-center gap-2 h-9 px-2 pr-3 rounded-xl border border-border bg-surface text-text-secondary hover:text-text-primary hover:border-amber-500/30 transition-colors"
               >
-                <div
-                  className="h-6 w-6 rounded-full flex items-center justify-center text-white font-bold text-[10px] select-none flex-shrink-0"
-                  style={{ backgroundColor: avatarColor }}
-                >
-                  {inicial}
+                <div className="h-7 w-7 rounded-full overflow-hidden flex-shrink-0">
+                  <AvatarComp size={28} />
                 </div>
                 <span className="hidden lg:block text-xs font-medium text-text-primary max-w-[100px] truncate">{nombreCensurado}</span>
                 <ChevronDown className="h-3 w-3" />
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 top-11 z-50 w-52 rounded-xl border border-border bg-surface shadow-xl py-1">
-                  <button
-                    onClick={() => setShowAvatarPicker(v => !v)}
-                    className="w-full flex items-center justify-between gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-input transition-colors"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <User className="h-3.5 w-3.5" /> Cambiar avatar
-                    </span>
-                    {showAvatarPicker ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  </button>
-
-                  {showAvatarPicker && (
-                    <div className="px-3 pb-2">
-                      <div className="grid grid-cols-6 gap-1.5">
-                        {AVATARES.map((av, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleSelectAvatar(idx)}
-                            title={av.label}
-                            className={`h-7 w-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] transition-all ${
-                              avatarIdx === idx ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-surface scale-110' : 'hover:scale-110'
-                            }`}
-                            style={{ backgroundColor: av.bg }}
-                          >
-                            {inicial}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
+                <div className="absolute right-0 top-11 z-50 w-44 rounded-xl border border-border bg-surface shadow-xl py-1">
                   <button
                     onClick={() => { setShowUserMenu(false); navigate('/perfil'); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-text-primary hover:bg-input transition-colors"
