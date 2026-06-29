@@ -1,5 +1,5 @@
 import api from './api';
-import type { SubastaBackend, PaginatedResponse } from '../utils/backendTypes';
+import type { SubastaBackend, PaginatedResponse, HistorialEstadoBackend } from '../utils/backendTypes';
 import { mapSubastaToAuction, mapPageToPaginated } from '../utils/mappers';
 import type { Auction } from '../types';
 
@@ -43,4 +43,9 @@ export async function misSubastas(page = 0, size = 20): Promise<{ items: Auction
 export async function cancelarSubastaAdmin(id: number): Promise<Auction> {
   const { data } = await api.put<SubastaBackend>(`/api/subastas/${id}/cancelar`);
   return mapSubastaToAuction(data);
+}
+
+export async function obtenerHistorial(id: string | number): Promise<HistorialEstadoBackend[]> {
+  const { data } = await api.get<HistorialEstadoBackend[]>(`/api/subastas/${id}/historial`);
+  return data;
 }

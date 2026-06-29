@@ -8,6 +8,7 @@ interface AuthState {
   email: string | null;
   nombre: string | null;
   roles: string[];
+  userId: number | null;
 }
 
 interface AuthContextType extends AuthState {
@@ -16,6 +17,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   isAdmin: () => boolean;
   isSeller: () => boolean;
+  userId: number | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,6 +31,16 @@ function parseRoles(token: string): string[] {
   }
 }
 
+function parseUserId(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const id = Number(payload.sub);
+    return isNaN(id) ? null : id;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>(() => {
     const stored = localStorage.getItem('access_token');
@@ -39,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: null,
         nombre: null,
         roles: parseRoles(stored),
+        userId: parseUserId(stored),
       };
     }
     return {
@@ -47,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: null,
       nombre: null,
       roles: [],
+      userId: null,
     };
   });
 
@@ -59,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
       nombre: data.nombre,
       roles: parseRoles(data.accessToken),
+      userId: parseUserId(data.accessToken),
     });
   }, []);
 
@@ -74,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: null,
       nombre: null,
       roles: [],
+      userId: null,
     });
   }, []);
 

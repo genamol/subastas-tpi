@@ -137,20 +137,49 @@ export default function MisPujasPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtrados.map(item => {
-            const ganando = item.posicion === 1;
+            const estado = item.auction?.estado ?? '';
+            const finalizada = estado === 'ADJUDICADA' || estado === 'FINALIZADA' || estado === 'CANCELADA';
+            const esPrimero = item.posicion === 1;
+            const ganando = !finalizada && esPrimero;
+            const ganaste = finalizada && esPrimero && estado !== 'CANCELADA';
             const currentPrice = item.auction?.currentPrice ?? 0;
             const diferencia = currentPrice - item.miMejorPuja;
+
+            let badgeText = '';
+            let badgeClass = '';
+            if (estado === 'CANCELADA') {
+              badgeText = 'CANCELADA';
+              badgeClass = 'bg-input text-text-muted border border-border';
+            } else if (ganaste) {
+              badgeText = '¡GANASTE!';
+              badgeClass = 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+            } else if (ganando) {
+              badgeText = '¡GANANDO!';
+              badgeClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            } else if (finalizada) {
+              badgeText = 'FINALIZADA';
+              badgeClass = 'bg-input text-text-muted border border-border';
+            } else {
+              badgeText = `PUESTO #${item.posicion > 0 ? item.posicion : '?'}`;
+              badgeClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+            }
+
+            const borderClass = ganaste
+              ? 'border-amber-500/30'
+              : ganando ? 'border-emerald-500/30'
+              : finalizada ? 'border-border'
+              : 'border-rose-500/20';
 
             return (
               <div key={item.subastaId}
                 onClick={() => navigate(`/subastas/${item.subastaId}`)}
-                className={`relative rounded-2xl border bg-surface p-4 cursor-pointer hover:border-amber-500/30 transition-all group ${ganando ? 'border-emerald-500/30' : 'border-rose-500/20'}`}>
+                className={`relative rounded-2xl border bg-surface p-4 cursor-pointer hover:border-amber-500/30 transition-all group ${borderClass}`}>
 
                 {/* Badge posición */}
                 <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                  {ganando && <Trophy className="h-3.5 w-3.5 text-amber-400" />}
-                  <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${ganando ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                    {ganando ? '¡GANANDO!' : `PUESTO #${item.posicion > 0 ? item.posicion : '?'}`}
+                  {(ganando || ganaste) && <Trophy className={`h-3.5 w-3.5 ${ganaste ? 'text-amber-400' : 'text-emerald-400'}`} />}
+                  <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold ${badgeClass}`}>
+                    {badgeText}
                   </span>
                 </div>
 
@@ -181,14 +210,20 @@ export default function MisPujasPage() {
                   </div>
                   <div className="text-right">
                     <span className="block text-[9px] text-text-muted uppercase tracking-wider mb-0.5">Precio actual</span>
-                    <span className={`font-mono font-bold text-sm ${ganando ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className={`font-mono font-bold text-sm ${ganando || ganaste ? 'text-emerald-400' : finalizada ? 'text-text-muted' : 'text-rose-400'}`}>
                       ${currentPrice.toLocaleString('es-ES')}
                     </span>
                   </div>
                 </div>
 
                 {/* Diferencia / estado */}
-                {!ganando && diferencia > 0 && (
+                {ganaste && (
+                  <div className="mt-2 flex items-center gap-1 text-[10px] text-amber-400">
+                    <Trophy className="h-3 w-3" />
+                    <span>Ganaste esta subasta</span>
+                  </div>
+                )}
+                {!ganando && !ganaste && !finalizada && diferencia > 0 && (
                   <div className="mt-2 flex items-center gap-1 text-[10px] text-rose-400">
                     <TrendingDown className="h-3 w-3" />
                     <span>Te superaron por <strong>${diferencia.toLocaleString('es-ES')}</strong></span>
@@ -198,6 +233,11 @@ export default function MisPujasPage() {
                   <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-400">
                     <TrendingUp className="h-3 w-3" />
                     <span>Tenés la oferta más alta</span>
+                  </div>
+                )}
+                {finalizada && !ganaste && estado !== 'CANCELADA' && (
+                  <div className="mt-2 flex items-center gap-1 text-[10px] text-text-muted">
+                    <span>Subasta finalizada</span>
                   </div>
                 )}
 

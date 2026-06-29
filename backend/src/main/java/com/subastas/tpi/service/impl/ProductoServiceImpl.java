@@ -41,6 +41,10 @@ public class ProductoServiceImpl implements ProductoService {
         Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
 
+        if (vendedor.isBloqueado()) {
+            throw new BusinessException("usuario.bloqueado", HttpStatus.FORBIDDEN);
+        }
+
         Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
                 .orElseThrow(() -> new BusinessException("categoria.no.encontrada", HttpStatus.NOT_FOUND));
 

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban } from 'lucide-react';
+import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban, Trophy, Star, EyeOff, GitBranch } from 'lucide-react';
+import type { HistorialEstadoBackend } from '../utils/backendTypes';
+import { censorName } from '../utils/privacidad';
 import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
 import * as subastaService from '../services/subastaService';
 import * as pujaService from '../services/pujaService';
 import * as disputaService from '../services/disputaService';
+import * as calificacionService from '../services/calificacionService';
 import { DetailSkeleton } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import type { Auction, Bid } from '../types';
@@ -18,11 +21,16 @@ const formatDate = (isoString: string) => {
 export default function SubastaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, userId } = useAuth();
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState('');
   const [bidError, setBidError] = useState('');
+  const [showCalificacionForm, setShowCalificacionForm] = useState(false);
+  const [calificacionPuntuacion, setCalificacionPuntuacion] = useState(5);
+  const [calificacionComentario, setCalificacionComentario] = useState('');
+  const [calificacionEnviada, setCalificacionEnviada] = useState(false);
+  const [calificacionError, setCalificacionError] = useState('');
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [disputeMotive, setDisputeMotive] = useState<'FRAUDE' | 'FALTA_DE_PAGO' | 'PRODUCTO_NO_RECIBIDO' | 'OTRO'>('PRODUCTO_NO_RECIBIDO');
   const [disputeText, setDisputeText] = useState('');
@@ -32,6 +40,7 @@ export default function SubastaDetailPage() {
   const [isUrgent, setIsUrgent] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [misBidsIds, setMisBidsIds] = useState<Set<number>>(new Set());
+  const [historial, setHistorial] = useState<HistorialEstadoBackend[]>([]);
 
   useEffect(() => {
     pujaService.misPujas(0, 200).then(r => {
@@ -51,6 +60,7 @@ export default function SubastaDetailPage() {
       .then(bids => setAuction(prev => prev ? { ...prev, bids } : prev))
       .catch(() => {})
       .finally(() => setLoading(false));
+    subastaService.obtenerHistorial(id).then(setHistorial).catch(() => {});
   }, [id]);
 
   useSse(
@@ -142,6 +152,29 @@ export default function SubastaDetailPage() {
     }
   };
 
+  const handleSubmitCalificacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !auction || !userId) return;
+    const esVendedor = userId === auction.vendedorId;
+    const esGanador = userId === auction.ganadorId;
+    if (!esVendedor && !esGanador) return;
+    const calificadoId = esVendedor ? auction.ganadorId! : auction.vendedorId;
+    setCalificacionError('');
+    try {
+      await calificacionService.calificar({
+        subastaId: Number(id),
+        calificadoId,
+        puntuacion: calificacionPuntuacion,
+        comentario: calificacionComentario || undefined,
+      });
+      setCalificacionEnviada(true);
+      setShowCalificacionForm(false);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+      setCalificacionError(axiosErr.response?.data?.mensaje ?? 'Error al enviar la calificación');
+    }
+  };
+
   const handleSubmitDisputa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
@@ -204,7 +237,15 @@ export default function SubastaDetailPage() {
             <p className="text-xs text-text-secondary leading-relaxed font-medium">{auction.description}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 border-t border-border/60 pt-4 text-xs">
               <div><span className="block text-[9px] text-text-muted uppercase">Categoría</span><strong className="text-text-primary mt-0.5 block">{auction.category}</strong></div>
-              <div><span className="block text-[9px] text-text-muted uppercase">Vendedor</span><strong className="text-text-primary mt-0.5 block">{auction.seller.name}</strong></div>
+              <div>
+                <span className="block text-[9px] text-text-muted uppercase">Vendedor</span>
+                <button
+                  onClick={() => navigate(`/usuarios/${auction.vendedorId}`)}
+                  className="font-bold text-text-primary mt-0.5 block hover:text-amber-400 transition-colors text-left"
+                >
+                  {censorName(auction.seller.name)}
+                </button>
+              </div>
               <div><span className="block text-[9px] text-text-muted uppercase">Precio Base</span><strong className="text-text-primary mt-0.5 block">${auction.startingPrice.toLocaleString('es-ES')}</strong></div>
               <div><span className="block text-[9px] text-text-muted uppercase">Pujas</span><strong className="text-text-primary mt-0.5 block">{auction.bidsCount}</strong></div>
             </div>
@@ -253,8 +294,21 @@ export default function SubastaDetailPage() {
                 auction.bids.slice(0, 20).map(bid => (
                   <div key={bid.id} className="flex items-center justify-between text-xs bg-input/50 p-2 rounded-lg border border-border/50">
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-[10px]">{bid.bidderName.charAt(0)}</div>
-                      <span className="text-text-primary">{misBidsIds.has(Number(bid.id)) ? 'Yo' : (bid.bidderName || 'Anónimo')}</span>
+                      <div className="h-6 w-6 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-[10px]">
+                        {misBidsIds.has(Number(bid.id)) ? 'Y' : <EyeOff className="h-3 w-3" />}
+                      </div>
+                      {misBidsIds.has(Number(bid.id)) ? (
+                        <span className="text-text-primary">Yo</span>
+                      ) : bid.bidderId ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); navigate(`/usuarios/${bid.bidderId}`); }}
+                          className="text-text-primary hover:text-amber-400 transition-colors"
+                        >
+                          {censorName(bid.bidderName || 'Anónimo')}
+                        </button>
+                      ) : (
+                        <span className="text-text-primary">{censorName(bid.bidderName || 'Anónimo')}</span>
+                      )}
                     </div>
                     <span className="font-mono font-bold text-amber-500">${bid.amount.toLocaleString('es-ES')}</span>
                   </div>
@@ -264,6 +318,152 @@ export default function SubastaDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Ganador banner */}
+      {(auction.estado === 'ADJUDICADA' || auction.estado === 'FINALIZADA') && auction.ganadorNombre && (
+        <div className="bg-surface border border-amber-500/30 p-5 rounded-2xl flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <Trophy className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="block text-[10px] text-text-muted uppercase tracking-wider">Ganador de la subasta</span>
+            {auction.ganadorId ? (
+              <button
+                onClick={() => navigate(`/usuarios/${auction.ganadorId}`)}
+                className="font-bold text-text-primary hover:text-amber-400 transition-colors"
+              >
+                {userId === auction.ganadorId || userId === auction.vendedorId
+                  ? auction.ganadorNombre
+                  : censorName(auction.ganadorNombre ?? '')}
+              </button>
+            ) : (
+              <span className="font-bold text-text-primary">{censorName(auction.ganadorNombre ?? '')}</span>
+            )}
+          </div>
+          <div className="ml-auto text-right">
+            <span className="block text-[10px] text-text-muted uppercase tracking-wider">Precio final</span>
+            <span className="font-mono font-extrabold text-amber-400">${auction.currentPrice.toLocaleString('es-ES')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Calificaciones */}
+      {(auction.estado === 'ADJUDICADA' || auction.estado === 'FINALIZADA') && isAuthenticated &&
+        userId !== null && (userId === auction.vendedorId || userId === auction.ganadorId) && (
+        <div className="bg-surface border border-border p-5 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-amber-400" />
+              <h4 className="font-display font-bold text-sm uppercase tracking-wide text-text-primary">Calificación</h4>
+            </div>
+            {!calificacionEnviada && !showCalificacionForm && (
+              <button
+                onClick={() => setShowCalificacionForm(true)}
+                className="text-xs text-amber-400 hover:text-amber-300 border border-amber-500/20 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Calificar {userId === auction.vendedorId ? 'al ganador' : 'al vendedor'}
+              </button>
+            )}
+          </div>
+
+          {calificacionEnviada && (
+            <p className="mt-3 text-xs text-emerald-400 flex items-center gap-2">
+              <Star className="h-3.5 w-3.5" /> Calificación enviada correctamente. ¡Gracias!
+            </p>
+          )}
+
+          {showCalificacionForm && (
+            <form onSubmit={handleSubmitCalificacion} className="mt-4 space-y-3 text-xs">
+              <div>
+                <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Puntuación:</label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button key={n} type="button"
+                      onClick={() => setCalificacionPuntuacion(n)}
+                      className={`h-8 w-8 rounded-lg font-bold text-sm transition-colors border ${
+                        calificacionPuntuacion >= n
+                          ? 'bg-amber-500/10 border-amber-500 text-amber-400'
+                          : 'bg-input border-border text-text-muted hover:text-amber-400'
+                      }`}
+                    >
+                      {n}★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Comentario (opcional):</label>
+                <textarea
+                  value={calificacionComentario}
+                  onChange={e => setCalificacionComentario(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed"
+                  placeholder="¿Cómo fue tu experiencia?"
+                />
+              </div>
+              {calificacionError && <span className="block text-[11px] font-semibold text-rose-400">{calificacionError}</span>}
+              <div className="flex gap-2">
+                <button type="submit"
+                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-black py-2.5 text-xs font-bold uppercase tracking-wider transition-colors">
+                  Enviar calificación
+                </button>
+                <button type="button" onClick={() => setShowCalificacionForm(false)}
+                  className="px-4 py-2.5 rounded-xl border border-border text-text-secondary hover:text-text-primary text-xs font-bold transition-colors">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Historial de estados */}
+      {historial.length > 0 && (
+        <div className="bg-surface border border-border p-5 rounded-2xl">
+          <div className="flex items-center gap-2 border-b border-border pb-2 mb-4">
+            <GitBranch className="h-4 w-4 text-text-muted" />
+            <h4 className="font-display font-bold text-sm uppercase tracking-wide text-text-primary">Historial de estados</h4>
+          </div>
+          <ol className="relative border-l border-border/60 ml-2 space-y-4">
+            {historial.map((h, i) => {
+              const isLast = i === historial.length - 1;
+              const colorMap: Record<string, string> = {
+                ACTIVA: 'bg-emerald-500 border-emerald-400',
+                ADJUDICADA: 'bg-amber-500 border-amber-400',
+                CANCELADA: 'bg-rose-500 border-rose-400',
+                FINALIZADA: 'bg-blue-500 border-blue-400',
+                EN_DISPUTA: 'bg-orange-500 border-orange-400',
+                PUBLICADA: 'bg-violet-500 border-violet-400',
+                BORRADOR: 'bg-input border-border',
+              };
+              const dot = colorMap[h.estadoNuevo] ?? 'bg-input border-border';
+              return (
+                <li key={h.id} className="ml-5">
+                  <span className={`absolute -left-1.5 flex h-3 w-3 items-center justify-center rounded-full border ${dot} ${isLast ? 'ring-2 ring-amber-500/30' : ''}`} />
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {h.estadoAnterior && (
+                      <>
+                        <span className="font-mono text-text-muted">{h.estadoAnterior}</span>
+                        <span className="text-text-muted">→</span>
+                      </>
+                    )}
+                    <span className="font-bold text-text-primary">{h.estadoNuevo}</span>
+                    <span className="text-[10px] text-text-muted ml-auto font-mono">
+                      {new Date(h.fecha).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  {(h.motivo || h.usuarioResponsableNombre) && (
+                    <p className="text-[10px] text-text-muted mt-0.5 leading-relaxed">
+                      {h.usuarioResponsableNombre && <span className="font-medium">{h.usuarioResponsableNombre}</span>}
+                      {h.motivo && <span>{h.usuarioResponsableNombre ? ' — ' : ''}{h.motivo}</span>}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
 
       {(auction.status === 'finished' || auction.status === 'active') && (
         <div className="bg-surface border border-border p-5 rounded-2xl">

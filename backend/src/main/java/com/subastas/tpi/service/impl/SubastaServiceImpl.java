@@ -1,6 +1,7 @@
 package com.subastas.tpi.service.impl;
 
 import com.subastas.tpi.dto.request.SubastaRequest;
+import com.subastas.tpi.dto.response.HistorialEstadoResponse;
 import com.subastas.tpi.dto.response.SubastaResponse;
 import com.subastas.tpi.event.EstadoCambiadoEvent;
 import com.subastas.tpi.exception.BusinessException;
@@ -48,6 +49,10 @@ public class SubastaServiceImpl implements SubastaService {
     public SubastaResponse crearSubasta(SubastaRequest request, Long vendedorId) {
         Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+
+        if (vendedor.isBloqueado()) {
+            throw new BusinessException("usuario.bloqueado", HttpStatus.FORBIDDEN);
+        }
 
         Producto producto = productoRepository.findById(request.getProductoId())
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
@@ -216,6 +221,21 @@ public class SubastaServiceImpl implements SubastaService {
                 .motivo(motivo)
                 .build();
         historialEstadoRepository.save(historial);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HistorialEstadoResponse> obtenerHistorial(Long subastaId) {
+        return historialEstadoRepository.findBySubastaIdOrderByFechaAsc(subastaId).stream()
+                .map(h -> HistorialEstadoResponse.builder()
+                        .id(h.getId())
+                        .estadoAnterior(h.getEstadoAnterior() != null ? h.getEstadoAnterior().name() : null)
+                        .estadoNuevo(h.getEstadoNuevo().name())
+                        .fecha(h.getFecha())
+                        .motivo(h.getMotivo())
+                        .usuarioResponsableNombre(h.getUsuarioResponsable() != null ? h.getUsuarioResponsable().getNombre() : null)
+                        .build())
+                .toList();
     }
 
     private SubastaResponse mapToResponse(Subasta subasta) {
