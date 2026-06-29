@@ -1,6 +1,7 @@
 export interface Bid {
   id: string;
   auctionId: string;
+  bidderId: number | null;
   bidderName: string;
   bidderAvatar: string;
   amount: number;

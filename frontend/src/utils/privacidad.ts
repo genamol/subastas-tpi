@@ -33,6 +33,10 @@ export function getAvatar(): number {
 
 export function setAvatar(index: number): void {
   localStorage.setItem('avatar_index', String(index));
-  // Remove old foto_perfil so avatar takes precedence
   localStorage.removeItem('foto_perfil');
+}
+
+/** Deterministic color for other users based on their ID */
+export function getAvatarForUser(userId: number): number {
+  return userId % AVATARES.length;
 }

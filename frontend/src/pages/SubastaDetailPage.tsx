@@ -234,7 +234,15 @@ export default function SubastaDetailPage() {
             <p className="text-xs text-text-secondary leading-relaxed font-medium">{auction.description}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 border-t border-border/60 pt-4 text-xs">
               <div><span className="block text-[9px] text-text-muted uppercase">Categoría</span><strong className="text-text-primary mt-0.5 block">{auction.category}</strong></div>
-              <div><span className="block text-[9px] text-text-muted uppercase">Vendedor</span><strong className="text-text-primary mt-0.5 block">{censorName(auction.seller.name)}</strong></div>
+              <div>
+                <span className="block text-[9px] text-text-muted uppercase">Vendedor</span>
+                <button
+                  onClick={() => navigate(`/usuarios/${auction.vendedorId}`)}
+                  className="font-bold text-text-primary mt-0.5 block hover:text-amber-400 transition-colors text-left"
+                >
+                  {censorName(auction.seller.name)}
+                </button>
+              </div>
               <div><span className="block text-[9px] text-text-muted uppercase">Precio Base</span><strong className="text-text-primary mt-0.5 block">${auction.startingPrice.toLocaleString('es-ES')}</strong></div>
               <div><span className="block text-[9px] text-text-muted uppercase">Pujas</span><strong className="text-text-primary mt-0.5 block">{auction.bidsCount}</strong></div>
             </div>
@@ -286,7 +294,18 @@ export default function SubastaDetailPage() {
                       <div className="h-6 w-6 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-[10px]">
                         {misBidsIds.has(Number(bid.id)) ? 'Y' : <EyeOff className="h-3 w-3" />}
                       </div>
-                      <span className="text-text-primary">{misBidsIds.has(Number(bid.id)) ? 'Yo' : censorName(bid.bidderName || 'Anónimo')}</span>
+                      {misBidsIds.has(Number(bid.id)) ? (
+                        <span className="text-text-primary">Yo</span>
+                      ) : bid.bidderId ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); navigate(`/usuarios/${bid.bidderId}`); }}
+                          className="text-text-primary hover:text-amber-400 transition-colors"
+                        >
+                          {censorName(bid.bidderName || 'Anónimo')}
+                        </button>
+                      ) : (
+                        <span className="text-text-primary">{censorName(bid.bidderName || 'Anónimo')}</span>
+                      )}
                     </div>
                     <span className="font-mono font-bold text-amber-500">${bid.amount.toLocaleString('es-ES')}</span>
                   </div>
@@ -305,11 +324,18 @@ export default function SubastaDetailPage() {
           </div>
           <div>
             <span className="block text-[10px] text-text-muted uppercase tracking-wider">Ganador de la subasta</span>
-            <span className="font-bold text-text-primary">
-              {userId === auction.ganadorId || userId === auction.vendedorId
-                ? auction.ganadorNombre
-                : censorName(auction.ganadorNombre ?? '')}
-            </span>
+            {auction.ganadorId ? (
+              <button
+                onClick={() => navigate(`/usuarios/${auction.ganadorId}`)}
+                className="font-bold text-text-primary hover:text-amber-400 transition-colors"
+              >
+                {userId === auction.ganadorId || userId === auction.vendedorId
+                  ? auction.ganadorNombre
+                  : censorName(auction.ganadorNombre ?? '')}
+              </button>
+            ) : (
+              <span className="font-bold text-text-primary">{censorName(auction.ganadorNombre ?? '')}</span>
+            )}
           </div>
           <div className="ml-auto text-right">
             <span className="block text-[10px] text-text-muted uppercase tracking-wider">Precio final</span>
