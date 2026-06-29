@@ -31,6 +31,7 @@ public class SubastaController {
         return ResponseEntity.ok(subastaService.obtenerPorId(id));
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @PostMapping
     public ResponseEntity<SubastaResponse> crear(@Valid @RequestBody SubastaRequest request,
                                                   @AuthenticationPrincipal Usuario usuario) {
@@ -38,6 +39,7 @@ public class SubastaController {
             .body(subastaService.crearSubasta(request, usuario.getId()));
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @PutMapping("/{id}/publicar")
     public ResponseEntity<SubastaResponse> publicar(@PathVariable Long id,
                                                      @AuthenticationPrincipal Usuario usuario) {

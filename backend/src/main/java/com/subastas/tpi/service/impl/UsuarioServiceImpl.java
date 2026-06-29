@@ -1,8 +1,12 @@
 package com.subastas.tpi.service.impl;
 
+import com.subastas.tpi.dto.request.ActualizarPerfilRequest;
+import com.subastas.tpi.dto.response.UsuarioPerfilResponse;
 import com.subastas.tpi.dto.response.UsuarioResponse;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.Usuario;
+import com.subastas.tpi.repository.PujaRepository;
+import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -13,12 +17,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PujaRepository pujaRepository;
+    private final SubastaRepository subastaRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,5 +80,51 @@ public class UsuarioServiceImpl implements UsuarioService {
             .createdAt(usuario.getCreatedAt())
             .roles(roles)
             .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UsuarioPerfilResponse obtenerPerfil(Long userId) {
+        Usuario u = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+
+        long totalPujas = pujaRepository.countByOfertanteId(u.getId());
+        long totalSubastas = subastaRepository.countByVendedorId(u.getId());
+
+        return UsuarioPerfilResponse.builder()
+                .id(u.getId())
+                .nombre(u.getNombre())
+                .email(u.getEmail())
+                .telefono(u.getTelefono())
+                .roles(u.getRoles().stream().map(r -> r.getNombre().name()).collect(Collectors.toList()))
+                .createdAt(u.getCreatedAt())
+                .totalPujas(totalPujas)
+                .totalSubastas(totalSubastas)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public UsuarioPerfilResponse actualizarPerfil(Long userId, ActualizarPerfilRequest request) {
+        Usuario u = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+
+        u.setNombre(request.getNombre());
+        u.setTelefono(request.getTelefono());
+        usuarioRepository.save(u);
+
+        long totalPujas = pujaRepository.countByOfertanteId(u.getId());
+        long totalSubastas = subastaRepository.countByVendedorId(u.getId());
+
+        return UsuarioPerfilResponse.builder()
+                .id(u.getId())
+                .nombre(u.getNombre())
+                .email(u.getEmail())
+                .telefono(u.getTelefono())
+                .roles(u.getRoles().stream().map(r -> r.getNombre().name()).collect(Collectors.toList()))
+                .createdAt(u.getCreatedAt())
+                .totalPujas(totalPujas)
+                .totalSubastas(totalSubastas)
+                .build();
     }
 }

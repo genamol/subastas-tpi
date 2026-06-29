@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +37,7 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.obtenerPorVendedor(usuario.getId(), pageable));
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @PostMapping
     public ResponseEntity<ProductoResponse> crear(@Valid @RequestBody ProductoRequest request,
                                                   @AuthenticationPrincipal Usuario usuario) {
@@ -43,6 +45,7 @@ public class ProductoController {
             .body(productoService.crear(request, usuario.getId()));
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @PutMapping("/{id}")
     public ResponseEntity<ProductoResponse> actualizar(@PathVariable Long id,
                                                        @Valid @RequestBody ProductoRequest request,
@@ -50,6 +53,7 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.actualizar(id, request, usuario.getId()));
     }
 
+    @PreAuthorize("hasRole('SELLER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id,
                                          @AuthenticationPrincipal Usuario usuario) {

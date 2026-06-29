@@ -20,7 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -49,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void register(RegisterRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("El email ya está registrado");
+            throw new BusinessException("auth.email.duplicado", HttpStatus.CONFLICT);
         }
 
         Usuario usuario = new Usuario();
@@ -59,9 +58,9 @@ public class AuthServiceImpl implements AuthService {
         usuario.setTelefono(request.getTelefono());
 
         var rolUser = rolRepository.findByNombre(RolNombre.USER)
-            .orElseThrow(() -> new BusinessException("Rol USER no encontrado"));
+            .orElseThrow(() -> new BusinessException("rol.no.encontrado"));
         var rolSeller = rolRepository.findByNombre(RolNombre.SELLER)
-            .orElseThrow(() -> new BusinessException("Rol SELLER no encontrado"));
+            .orElseThrow(() -> new BusinessException("rol.no.encontrado"));
 
         usuario.setRoles(Set.of(rolUser, rolSeller));
         usuarioRepository.save(usuario);
@@ -71,14 +70,14 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request, HttpServletResponse response) {
         Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new BusinessException("Credenciales inválidas", HttpStatus.UNAUTHORIZED));
+            .orElseThrow(() -> new BusinessException("auth.credenciales.invalidas", HttpStatus.UNAUTHORIZED));
 
         if (usuario.isBloqueado()) {
-            throw new BusinessException("La cuenta está bloqueada", HttpStatus.FORBIDDEN);
+            throw new BusinessException("usuario.bloqueado", HttpStatus.FORBIDDEN);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-            throw new BusinessException("Credenciales inválidas", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException("auth.credenciales.invalidas", HttpStatus.UNAUTHORIZED);
         }
 
         String accessToken = jwtService.generarAccessToken(usuario);
@@ -97,19 +96,19 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = extraerCookieRefresh(request);
 
         if (refreshToken == null || !jwtService.esValido(refreshToken)) {
-            throw new BusinessException("Refresh token inválido", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException("token.invalido", HttpStatus.UNAUTHORIZED);
         }
 
         if (tokenBlacklistRepository.existsByToken(refreshToken)) {
-            throw new BusinessException("Sesión revocada", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException("auth.sesion.revocada", HttpStatus.UNAUTHORIZED);
         }
 
         Long userId = jwtService.extraerUserId(refreshToken);
         Usuario usuario = usuarioRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException("Usuario no encontrado", HttpStatus.UNAUTHORIZED));
+            .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.UNAUTHORIZED));
 
         if (usuario.isBloqueado()) {
-            throw new BusinessException("La cuenta está bloqueada", HttpStatus.FORBIDDEN);
+            throw new BusinessException("usuario.bloqueado", HttpStatus.FORBIDDEN);
         }
 
         String nuevoAccessToken = jwtService.generarAccessToken(usuario);

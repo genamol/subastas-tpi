@@ -53,5 +53,9 @@ export function useSubastas() {
     }
   }, [page, totalPages, cargar]);
 
-  return { auctions, loading, error, pujar, cargarMas, totalPages, page };
+  const recargar = useCallback(() => {
+    cargar(0);
+  }, [cargar]);
+
+  return { auctions, loading, error, pujar, cargarMas, recargar, totalPages, page };
 }

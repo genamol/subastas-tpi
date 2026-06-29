@@ -50,6 +50,7 @@ export interface Notification {
   message: string;
   time: string;
   read: boolean;
+  subastaId: string | null;
 }
 
 export interface Dispute {

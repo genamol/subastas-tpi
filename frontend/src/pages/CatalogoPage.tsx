@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Clock, Gavel } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubastas } from '../hooks/useSubastas';
+import { useSse } from '../hooks/useSse';
+import { obtenerTicketNotificaciones } from '../services/sseService';
 import { Spinner, CardSkeleton } from '../components/Spinner';
 import api from '../services/api';
 import type { Auction } from '../types';
@@ -43,8 +45,12 @@ function CardCountdown({ endTime }: { endTime: string }) {
 }
 
 export default function CatalogoPage() {
-  const { auctions, loading, error, pujar } = useSubastas();
+  const { auctions, loading, error, pujar, recargar } = useSubastas();
   const navigate = useNavigate();
+
+  useSse(obtenerTicketNotificaciones, '/api/notificaciones/stream', {
+    'notificacion-nueva': () => { recargar(); },
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [bidError, setBidError] = useState<string | null>(null);

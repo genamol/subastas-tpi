@@ -47,6 +47,7 @@ export function mapNotificacionToNotification(n: NotificacionBackend): Notificat
     message: n.mensaje,
     time: n.fechaCreacion,
     read: n.leida,
+    subastaId: n.subastaId != null ? String(n.subastaId) : null,
   };
 }
 

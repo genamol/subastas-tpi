@@ -37,6 +37,13 @@ export default function SubastaDetailPage() {
   const [isEnded, setIsEnded] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
+  const [misBidsIds, setMisBidsIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    pujaService.misPujas(0, 200).then(r => {
+      setMisBidsIds(new Set(r.items.map(b => Number(b.id))));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -276,7 +283,7 @@ export default function SubastaDetailPage() {
                   <div key={bid.id} className="flex items-center justify-between text-xs bg-input/50 p-2 rounded-lg border border-border/50">
                     <div className="flex items-center gap-2">
                       <div className="h-6 w-6 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-[10px]">{bid.bidderName.charAt(0)}</div>
-                      <span className="text-text-primary">{bid.bidderName || 'Anónimo'}</span>
+                      <span className="text-text-primary">{misBidsIds.has(Number(bid.id)) ? 'Yo' : (bid.bidderName || 'Anónimo')}</span>
                     </div>
                     <span className="font-mono font-bold text-amber-500">${bid.amount.toLocaleString('es-ES')}</span>
                   </div>

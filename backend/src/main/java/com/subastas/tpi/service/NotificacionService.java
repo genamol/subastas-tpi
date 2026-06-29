@@ -5,6 +5,8 @@ import com.subastas.tpi.model.Notificacion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
+
 public interface NotificacionService {
 
     Page<NotificacionResponse> obtenerMisNotificaciones(Long usuarioId, Pageable pageable);
@@ -15,5 +17,5 @@ public interface NotificacionService {
 
     long contarNoLeidas(Long usuarioId);
 
-    Notificacion notificarVendedorNuevaPuja(Long subastaId);
+    Notificacion notificarVendedorNuevaPuja(Long subastaId, BigDecimal monto);
 }
