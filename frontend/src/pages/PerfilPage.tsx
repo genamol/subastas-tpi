@@ -3,6 +3,7 @@ import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X, Star } fr
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { obtenerCalificacionesPorUsuario, type CalificacionResponse } from '../services/calificacionService';
+import { AVATARES, getAvatar } from '../utils/privacidad';
 
 interface PerfilData {
   id: number;
@@ -21,15 +22,19 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   USER:   { label: 'Usuario',       color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
 
-function Initials({ nombre }: { nombre: string }) {
-  const foto = localStorage.getItem('foto_perfil');
+function AvatarDisplay({ nombre }: { nombre: string }) {
+  const idx = getAvatar();
+  const color = AVATARES[idx]?.bg ?? '#F59E0B';
   const parts = nombre.trim().split(' ');
-  const ini = parts.length >= 2
+  const ini = (parts.length >= 2
     ? parts[0][0] + parts[1][0]
-    : parts[0].slice(0, 2);
+    : parts[0].slice(0, 2)).toUpperCase();
   return (
-    <div className="h-20 w-20 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-2xl shadow-lg shadow-amber-500/20 select-none overflow-hidden">
-      {foto ? <img src={foto} alt="" className="h-full w-full object-cover" /> : ini.toUpperCase()}
+    <div
+      className="h-20 w-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg select-none flex-shrink-0"
+      style={{ backgroundColor: color }}
+    >
+      {ini}
     </div>
   );
 }
@@ -115,7 +120,7 @@ export default function PerfilPage() {
 
       {/* Header */}
       <div className="bg-surface border border-border rounded-2xl p-6 flex items-center gap-5">
-        <Initials nombre={perfil.nombre} />
+        <AvatarDisplay nombre={perfil.nombre} />
         <div className="flex-1 min-w-0">
           <h2 className="font-display text-xl font-bold text-text-primary truncate">{perfil.nombre}</h2>
           <p className="text-xs text-text-muted mt-0.5">{perfil.email}</p>

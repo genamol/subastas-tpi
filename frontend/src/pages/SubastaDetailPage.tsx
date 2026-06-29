@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban, Trophy, Star } from 'lucide-react';
+import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban, Trophy, Star, EyeOff } from 'lucide-react';
+import { censorName } from '../utils/privacidad';
 import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
 import * as subastaService from '../services/subastaService';
@@ -233,7 +234,7 @@ export default function SubastaDetailPage() {
             <p className="text-xs text-text-secondary leading-relaxed font-medium">{auction.description}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 border-t border-border/60 pt-4 text-xs">
               <div><span className="block text-[9px] text-text-muted uppercase">Categoría</span><strong className="text-text-primary mt-0.5 block">{auction.category}</strong></div>
-              <div><span className="block text-[9px] text-text-muted uppercase">Vendedor</span><strong className="text-text-primary mt-0.5 block">{auction.seller.name}</strong></div>
+              <div><span className="block text-[9px] text-text-muted uppercase">Vendedor</span><strong className="text-text-primary mt-0.5 block">{censorName(auction.seller.name)}</strong></div>
               <div><span className="block text-[9px] text-text-muted uppercase">Precio Base</span><strong className="text-text-primary mt-0.5 block">${auction.startingPrice.toLocaleString('es-ES')}</strong></div>
               <div><span className="block text-[9px] text-text-muted uppercase">Pujas</span><strong className="text-text-primary mt-0.5 block">{auction.bidsCount}</strong></div>
             </div>
@@ -282,8 +283,10 @@ export default function SubastaDetailPage() {
                 auction.bids.slice(0, 20).map(bid => (
                   <div key={bid.id} className="flex items-center justify-between text-xs bg-input/50 p-2 rounded-lg border border-border/50">
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-[10px]">{bid.bidderName.charAt(0)}</div>
-                      <span className="text-text-primary">{misBidsIds.has(Number(bid.id)) ? 'Yo' : (bid.bidderName || 'Anónimo')}</span>
+                      <div className="h-6 w-6 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold text-[10px]">
+                        {misBidsIds.has(Number(bid.id)) ? 'Y' : <EyeOff className="h-3 w-3" />}
+                      </div>
+                      <span className="text-text-primary">{misBidsIds.has(Number(bid.id)) ? 'Yo' : censorName(bid.bidderName || 'Anónimo')}</span>
                     </div>
                     <span className="font-mono font-bold text-amber-500">${bid.amount.toLocaleString('es-ES')}</span>
                   </div>
@@ -302,7 +305,11 @@ export default function SubastaDetailPage() {
           </div>
           <div>
             <span className="block text-[10px] text-text-muted uppercase tracking-wider">Ganador de la subasta</span>
-            <span className="font-bold text-text-primary">{auction.ganadorNombre}</span>
+            <span className="font-bold text-text-primary">
+              {userId === auction.ganadorId || userId === auction.vendedorId
+                ? auction.ganadorNombre
+                : censorName(auction.ganadorNombre ?? '')}
+            </span>
           </div>
           <div className="ml-auto text-right">
             <span className="block text-[10px] text-text-muted uppercase tracking-wider">Precio final</span>
