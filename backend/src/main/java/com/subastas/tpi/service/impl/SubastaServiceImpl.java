@@ -49,6 +49,10 @@ public class SubastaServiceImpl implements SubastaService {
         Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
 
+        if (vendedor.isBloqueado()) {
+            throw new BusinessException("usuario.bloqueado", HttpStatus.FORBIDDEN);
+        }
+
         Producto producto = productoRepository.findById(request.getProductoId())
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
 

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X, Star } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { obtenerCalificacionesPorUsuario, type CalificacionResponse } from '../services/calificacionService';
 
 interface PerfilData {
   id: number;
@@ -43,10 +44,19 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveOk, setSaveOk] = useState(false);
+  const [calificaciones, setCalificaciones] = useState<CalificacionResponse[]>([]);
+  const [loadingCalif, setLoadingCalif] = useState(false);
 
   useEffect(() => {
     api.get<PerfilData>('/api/usuarios/me')
-      .then(({ data }) => setPerfil(data))
+      .then(({ data }) => {
+        setPerfil(data);
+        setLoadingCalif(true);
+        return obtenerCalificacionesPorUsuario(data.id, 0, 20)
+          .then(res => setCalificaciones(res.content))
+          .catch(() => {})
+          .finally(() => setLoadingCalif(false));
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -139,6 +149,43 @@ export default function PerfilPage() {
           <span className="block font-mono text-3xl font-extrabold text-text-primary">{perfil.totalSubastas}</span>
           <span className="block text-[11px] text-text-muted uppercase tracking-wider mt-1">Subastas publicadas</span>
         </div>
+      </div>
+
+      {/* Calificaciones recibidas */}
+      <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-border pb-2">
+          <h3 className="font-display font-bold text-sm uppercase tracking-wider text-text-primary flex items-center gap-2">
+            <Star className="h-4 w-4 text-amber-400" /> Calificaciones recibidas
+          </h3>
+          {calificaciones.length > 0 && (
+            <span className="text-xs font-mono font-bold text-amber-400">
+              {(calificaciones.reduce((s, c) => s + c.puntuacion, 0) / calificaciones.length).toFixed(1)} ★ promedio
+            </span>
+          )}
+        </div>
+
+        {loadingCalif ? (
+          <div className="py-6 text-center">
+            <div className="h-5 w-5 mx-auto animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+          </div>
+        ) : calificaciones.length === 0 ? (
+          <p className="text-xs text-text-muted text-center py-4">Aún no recibiste calificaciones.</p>
+        ) : (
+          <div className="space-y-3">
+            {calificaciones.map(c => (
+              <div key={c.id} className="bg-input border border-border/60 rounded-xl p-3 text-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-text-primary">{c.calificadorNombre}</span>
+                  <span className="font-mono text-amber-400 font-bold">{'★'.repeat(c.puntuacion)}{'☆'.repeat(5 - c.puntuacion)}</span>
+                </div>
+                {c.comentario && <p className="text-text-secondary leading-relaxed">{c.comentario}</p>}
+                <span className="block mt-1 text-[10px] text-text-muted">
+                  {new Date(c.fechaCreacion).toLocaleDateString('es-ES')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info / Edit */}

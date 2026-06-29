@@ -1,31 +1,34 @@
 import { useState } from 'react';
-import { 
-  Shield, 
-  AlertTriangle, 
-  Users, 
-  Radio, 
-  Gavel, 
-  CheckCircle, 
-  XCircle, 
-  Ban, 
-  Unlock, 
-  Clock, 
-  UserX, 
-  MessageSquare, 
-  Calendar,
-  Send,
-  HelpCircle,
-  TrendingUp,
-  FileSpreadsheet
+import {
+  Shield,
+  AlertTriangle,
+  Users,
+  Radio,
+  CheckCircle,
+  Ban,
+  Unlock,
+  Clock,
+  MessageSquare,
+  Tag,
+  Plus,
+  Pencil,
+  Trash2,
+  Check,
+  X
 } from 'lucide-react';
-import { Dispute, UserAccount, Auction, Bid } from '../types';
+import { Dispute, UserAccount, Auction } from '../types';
+import type { Categoria } from '../services/categoriaService';
 
 interface AdminPanelProps {
   disputes: Dispute[];
   users: UserAccount[];
   auctions: Auction[];
+  categorias: Categoria[];
   onResolveDispute: (id: string, state: 'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA', resolution: string) => void;
   onToggleUserStatus: (id: string) => void;
+  onCrearCategoria: (nombre: string) => Promise<void>;
+  onActualizarCategoria: (id: number, nombre: string) => Promise<void>;
+  onEliminarCategoria: (id: number) => Promise<void>;
   sseLogs: string[];
 }
 
@@ -33,11 +36,20 @@ export default function AdminPanel({
   disputes,
   users,
   auctions,
+  categorias,
   onResolveDispute,
   onToggleUserStatus,
+  onCrearCategoria,
+  onActualizarCategoria,
+  onEliminarCategoria,
   sseLogs
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'disputes' | 'users' | 'monitor'>('disputes');
+  const [activeTab, setActiveTab] = useState<'disputes' | 'users' | 'monitor' | 'categorias'>('disputes');
+  const [nuevaCategoria, setNuevaCategoria] = useState('');
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editandoNombre, setEditandoNombre] = useState('');
+  const [categoriaSaving, setCategoriaSaving] = useState(false);
+  const [categoriaError, setCategoriaError] = useState('');
   const [disputeFilter, setDisputeFilter] = useState<'TODOS' | 'ABIERTA' | 'RESUELTA'>('TODOS');
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [resolutionState, setResolutionState] = useState<'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA'>('CANCELADA');
@@ -146,7 +158,19 @@ export default function AdminPanel({
             }`}
           >
             <Radio className="h-3.5 w-3.5" />
-            <span>Monitor SSE en Vivo</span>
+            <span>Monitor SSE</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('categorias')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'categorias'
+                ? 'bg-amber-500 text-[#0A0A0C] shadow-md shadow-amber-500/10'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <Tag className="h-3.5 w-3.5" />
+            <span>Categorías ({categorias.length})</span>
           </button>
         </div>
       </div>
@@ -444,9 +468,116 @@ export default function AdminPanel({
           </div>
         )}
 
+        {/* Categorías tab */}
+        {activeTab === 'categorias' && (
+          <div className="space-y-4 animate-fade-in">
+            {/* Crear nueva */}
+            <form
+              onSubmit={async e => {
+                e.preventDefault();
+                if (!nuevaCategoria.trim()) return;
+                setCategoriaSaving(true);
+                setCategoriaError('');
+                try {
+                  await onCrearCategoria(nuevaCategoria.trim());
+                  setNuevaCategoria('');
+                } catch (err: unknown) {
+                  const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+                  setCategoriaError(axiosErr.response?.data?.mensaje ?? 'Error al crear la categoría');
+                } finally {
+                  setCategoriaSaving(false);
+                }
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={nuevaCategoria}
+                onChange={e => setNuevaCategoria(e.target.value)}
+                placeholder="Nueva categoría..."
+                className="flex-1 rounded-xl border border-border bg-input px-3 py-2 text-xs text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={categoriaSaving || !nuevaCategoria.trim()}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-colors disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> Agregar
+              </button>
+            </form>
+            {categoriaError && <span className="block text-[11px] text-rose-400">{categoriaError}</span>}
+
+            {/* Lista */}
+            <div className="space-y-2">
+              {categorias.length === 0 ? (
+                <p className="text-xs text-text-muted text-center py-6">No hay categorías registradas.</p>
+              ) : categorias.map(cat => (
+                <div key={cat.id} className="flex items-center gap-2 bg-input border border-border rounded-xl px-3 py-2">
+                  {editandoId === cat.id ? (
+                    <>
+                      <input
+                        autoFocus
+                        value={editandoNombre}
+                        onChange={e => setEditandoNombre(e.target.value)}
+                        className="flex-1 bg-surface border border-amber-500/30 rounded-lg px-2 py-1 text-xs text-text-primary focus:border-amber-500 focus:outline-none"
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!editandoNombre.trim()) return;
+                          setCategoriaError('');
+                          try {
+                            await onActualizarCategoria(cat.id, editandoNombre.trim());
+                            setEditandoId(null);
+                          } catch (err: unknown) {
+                            const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+                            setCategoriaError(axiosErr.response?.data?.mensaje ?? 'Error al actualizar');
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setEditandoId(null)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Tag className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                      <span className="flex-1 text-xs text-text-primary font-medium">{cat.nombre}</span>
+                      <button
+                        onClick={() => { setEditandoId(cat.id); setEditandoNombre(cat.nombre); setCategoriaError(''); }}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-amber-400 transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setCategoriaError('');
+                          try {
+                            await onEliminarCategoria(cat.id);
+                          } catch (err: unknown) {
+                            const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+                            setCategoriaError(axiosErr.response?.data?.mensaje ?? 'No se puede eliminar (puede tener productos asociados)');
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-rose-400 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
 
-      
+
       {selectedDispute && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-main/80 backdrop-blur-sm p-4">
           <form 

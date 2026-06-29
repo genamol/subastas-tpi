@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban } from 'lucide-react';
+import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban, Trophy, Star } from 'lucide-react';
 import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
 import * as subastaService from '../services/subastaService';
 import * as pujaService from '../services/pujaService';
 import * as disputaService from '../services/disputaService';
+import * as calificacionService from '../services/calificacionService';
 import { DetailSkeleton } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import type { Auction, Bid } from '../types';
@@ -18,11 +19,16 @@ const formatDate = (isoString: string) => {
 export default function SubastaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, userId } = useAuth();
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState('');
   const [bidError, setBidError] = useState('');
+  const [showCalificacionForm, setShowCalificacionForm] = useState(false);
+  const [calificacionPuntuacion, setCalificacionPuntuacion] = useState(5);
+  const [calificacionComentario, setCalificacionComentario] = useState('');
+  const [calificacionEnviada, setCalificacionEnviada] = useState(false);
+  const [calificacionError, setCalificacionError] = useState('');
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [disputeMotive, setDisputeMotive] = useState<'FRAUDE' | 'FALTA_DE_PAGO' | 'PRODUCTO_NO_RECIBIDO' | 'OTRO'>('PRODUCTO_NO_RECIBIDO');
   const [disputeText, setDisputeText] = useState('');
@@ -132,6 +138,29 @@ export default function SubastaDetailPage() {
       } else {
         setBidError('Error de conexión');
       }
+    }
+  };
+
+  const handleSubmitCalificacion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !auction || !userId) return;
+    const esVendedor = userId === auction.vendedorId;
+    const esGanador = userId === auction.ganadorId;
+    if (!esVendedor && !esGanador) return;
+    const calificadoId = esVendedor ? auction.ganadorId! : auction.vendedorId;
+    setCalificacionError('');
+    try {
+      await calificacionService.calificar({
+        subastaId: Number(id),
+        calificadoId,
+        puntuacion: calificacionPuntuacion,
+        comentario: calificacionComentario || undefined,
+      });
+      setCalificacionEnviada(true);
+      setShowCalificacionForm(false);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { mensaje?: string } } };
+      setCalificacionError(axiosErr.response?.data?.mensaje ?? 'Error al enviar la calificación');
     }
   };
 
@@ -257,6 +286,93 @@ export default function SubastaDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Ganador banner */}
+      {(auction.estado === 'ADJUDICADA' || auction.estado === 'FINALIZADA') && auction.ganadorNombre && (
+        <div className="bg-surface border border-amber-500/30 p-5 rounded-2xl flex items-center gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <Trophy className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="block text-[10px] text-text-muted uppercase tracking-wider">Ganador de la subasta</span>
+            <span className="font-bold text-text-primary">{auction.ganadorNombre}</span>
+          </div>
+          <div className="ml-auto text-right">
+            <span className="block text-[10px] text-text-muted uppercase tracking-wider">Precio final</span>
+            <span className="font-mono font-extrabold text-amber-400">${auction.currentPrice.toLocaleString('es-ES')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Calificaciones */}
+      {(auction.estado === 'ADJUDICADA' || auction.estado === 'FINALIZADA') && isAuthenticated &&
+        userId !== null && (userId === auction.vendedorId || userId === auction.ganadorId) && (
+        <div className="bg-surface border border-border p-5 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-amber-400" />
+              <h4 className="font-display font-bold text-sm uppercase tracking-wide text-text-primary">Calificación</h4>
+            </div>
+            {!calificacionEnviada && !showCalificacionForm && (
+              <button
+                onClick={() => setShowCalificacionForm(true)}
+                className="text-xs text-amber-400 hover:text-amber-300 border border-amber-500/20 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Calificar {userId === auction.vendedorId ? 'al ganador' : 'al vendedor'}
+              </button>
+            )}
+          </div>
+
+          {calificacionEnviada && (
+            <p className="mt-3 text-xs text-emerald-400 flex items-center gap-2">
+              <Star className="h-3.5 w-3.5" /> Calificación enviada correctamente. ¡Gracias!
+            </p>
+          )}
+
+          {showCalificacionForm && (
+            <form onSubmit={handleSubmitCalificacion} className="mt-4 space-y-3 text-xs">
+              <div>
+                <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Puntuación:</label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button key={n} type="button"
+                      onClick={() => setCalificacionPuntuacion(n)}
+                      className={`h-8 w-8 rounded-lg font-bold text-sm transition-colors border ${
+                        calificacionPuntuacion >= n
+                          ? 'bg-amber-500/10 border-amber-500 text-amber-400'
+                          : 'bg-input border-border text-text-muted hover:text-amber-400'
+                      }`}
+                    >
+                      {n}★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Comentario (opcional):</label>
+                <textarea
+                  value={calificacionComentario}
+                  onChange={e => setCalificacionComentario(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed"
+                  placeholder="¿Cómo fue tu experiencia?"
+                />
+              </div>
+              {calificacionError && <span className="block text-[11px] font-semibold text-rose-400">{calificacionError}</span>}
+              <div className="flex gap-2">
+                <button type="submit"
+                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-black py-2.5 text-xs font-bold uppercase tracking-wider transition-colors">
+                  Enviar calificación
+                </button>
+                <button type="button" onClick={() => setShowCalificacionForm(false)}
+                  className="px-4 py-2.5 rounded-xl border border-border text-text-secondary hover:text-text-primary text-xs font-bold transition-colors">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
 
       {(auction.status === 'finished' || auction.status === 'active') && (
         <div className="bg-surface border border-border p-5 rounded-2xl">

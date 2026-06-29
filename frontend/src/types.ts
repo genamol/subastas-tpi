@@ -31,6 +31,8 @@ export interface Auction {
   status: 'active' | 'finished';
   estado: string;
   vendedorId: number;
+  ganadorId: number | null;
+  ganadorNombre: string | null;
 }
 
 export interface UserProfile {
