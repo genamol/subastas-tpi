@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban, Trophy, Star, EyeOff } from 'lucide-react';
+import { ChevronRight, Clock, History, Gavel, AlertTriangle, Megaphone, Ban, Trophy, Star, EyeOff, GitBranch } from 'lucide-react';
+import type { HistorialEstadoBackend } from '../utils/backendTypes';
 import { censorName } from '../utils/privacidad';
 import { obtenerTicket } from '../services/sseService';
 import { useSse } from '../hooks/useSse';
@@ -39,6 +40,7 @@ export default function SubastaDetailPage() {
   const [isUrgent, setIsUrgent] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [misBidsIds, setMisBidsIds] = useState<Set<number>>(new Set());
+  const [historial, setHistorial] = useState<HistorialEstadoBackend[]>([]);
 
   useEffect(() => {
     pujaService.misPujas(0, 200).then(r => {
@@ -58,6 +60,7 @@ export default function SubastaDetailPage() {
       .then(bids => setAuction(prev => prev ? { ...prev, bids } : prev))
       .catch(() => {})
       .finally(() => setLoading(false));
+    subastaService.obtenerHistorial(id).then(setHistorial).catch(() => {});
   }, [id]);
 
   useSse(
@@ -411,6 +414,54 @@ export default function SubastaDetailPage() {
               </div>
             </form>
           )}
+        </div>
+      )}
+
+      {/* Historial de estados */}
+      {historial.length > 0 && (
+        <div className="bg-surface border border-border p-5 rounded-2xl">
+          <div className="flex items-center gap-2 border-b border-border pb-2 mb-4">
+            <GitBranch className="h-4 w-4 text-text-muted" />
+            <h4 className="font-display font-bold text-sm uppercase tracking-wide text-text-primary">Historial de estados</h4>
+          </div>
+          <ol className="relative border-l border-border/60 ml-2 space-y-4">
+            {historial.map((h, i) => {
+              const isLast = i === historial.length - 1;
+              const colorMap: Record<string, string> = {
+                ACTIVA: 'bg-emerald-500 border-emerald-400',
+                ADJUDICADA: 'bg-amber-500 border-amber-400',
+                CANCELADA: 'bg-rose-500 border-rose-400',
+                FINALIZADA: 'bg-blue-500 border-blue-400',
+                EN_DISPUTA: 'bg-orange-500 border-orange-400',
+                PUBLICADA: 'bg-violet-500 border-violet-400',
+                BORRADOR: 'bg-input border-border',
+              };
+              const dot = colorMap[h.estadoNuevo] ?? 'bg-input border-border';
+              return (
+                <li key={h.id} className="ml-5">
+                  <span className={`absolute -left-1.5 flex h-3 w-3 items-center justify-center rounded-full border ${dot} ${isLast ? 'ring-2 ring-amber-500/30' : ''}`} />
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {h.estadoAnterior && (
+                      <>
+                        <span className="font-mono text-text-muted">{h.estadoAnterior}</span>
+                        <span className="text-text-muted">→</span>
+                      </>
+                    )}
+                    <span className="font-bold text-text-primary">{h.estadoNuevo}</span>
+                    <span className="text-[10px] text-text-muted ml-auto font-mono">
+                      {new Date(h.fecha).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  {(h.motivo || h.usuarioResponsableNombre) && (
+                    <p className="text-[10px] text-text-muted mt-0.5 leading-relaxed">
+                      {h.usuarioResponsableNombre && <span className="font-medium">{h.usuarioResponsableNombre}</span>}
+                      {h.motivo && <span>{h.usuarioResponsableNombre ? ' — ' : ''}{h.motivo}</span>}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
         </div>
       )}
 

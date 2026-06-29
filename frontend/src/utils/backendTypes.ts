@@ -67,6 +67,15 @@ export interface UsuarioBackend {
   createdAt: string;
 }
 
+export interface HistorialEstadoBackend {
+  id: number;
+  estadoAnterior: string | null;
+  estadoNuevo: string;
+  fecha: string;
+  motivo: string | null;
+  usuarioResponsableNombre: string | null;
+}
+
 export interface DisputaBackend {
   id: number;
   tipo: string;

@@ -13,6 +13,7 @@ import AdminPage from './pages/AdminPage';
 import CatalogoInvitadoPage from './pages/CatalogoInvitadoPage';
 import PerfilPage from './pages/PerfilPage';
 import PerfilPublicoPage from './pages/PerfilPublicoPage';
+import MisProductosPage from './pages/MisProductosPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -44,6 +45,7 @@ export default function AppRouter() {
               <Route path="/crear" element={<CrearSubastaPage />} />
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
               <Route path="/perfil" element={<PerfilPage />} />
+              <Route path="/mis-productos" element={<MisProductosPage />} />
               <Route path="/usuarios/:id" element={<PerfilPublicoPage />} />
             </Route>
             <Route path="/" element={<Navigate to="/catalogo" replace />} />

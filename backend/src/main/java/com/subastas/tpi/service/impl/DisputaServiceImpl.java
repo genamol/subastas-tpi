@@ -86,9 +86,9 @@ public class DisputaServiceImpl implements DisputaService {
 
         disputaRepository.save(disputa);
 
-        // Al resolver la disputa la subasta vuelve a ADJUDICADA
         Subasta subasta = disputa.getSubasta();
-        subasta.setEstado(EstadoSubasta.ADJUDICADA);
+        EstadoSubasta estadoFinal = request.getEstadoFinal() != null ? request.getEstadoFinal() : EstadoSubasta.ADJUDICADA;
+        subasta.setEstado(estadoFinal);
         subastaRepository.save(subasta);
 
         return mapToResponse(disputa);

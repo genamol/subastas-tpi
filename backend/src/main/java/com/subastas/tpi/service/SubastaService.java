@@ -1,9 +1,12 @@
 package com.subastas.tpi.service;
 
 import com.subastas.tpi.dto.request.SubastaRequest;
+import com.subastas.tpi.dto.response.HistorialEstadoResponse;
 import com.subastas.tpi.dto.response.SubastaResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface SubastaService {
 
@@ -15,8 +18,5 @@ public interface SubastaService {
     Page<SubastaResponse> obtenerTodas(Pageable pageable);
     Page<SubastaResponse> obtenerMisSubastas(Long vendedorId, Pageable pageable);
     void procesarCierresAutomaticos();
-
-
-
-
+    List<HistorialEstadoResponse> obtenerHistorial(Long subastaId);
 }

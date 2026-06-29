@@ -20,3 +20,22 @@ export async function crearProducto(request: {
   const { data } = await api.post<ProductoBackend>('/api/productos', request);
   return data;
 }
+
+export async function misProductos(page = 0, size = 20) {
+  const { data } = await api.get<PaginatedResponse<ProductoBackend>>(`/api/productos/mis-productos?page=${page}&size=${size}`);
+  return data;
+}
+
+export async function actualizarProducto(id: number, request: {
+  nombre: string;
+  descripcion?: string;
+  categoriaId: number;
+  imagenes?: string[];
+}) {
+  const { data } = await api.put<ProductoBackend>(`/api/productos/${id}`, request);
+  return data;
+}
+
+export async function eliminarProducto(id: number): Promise<void> {
+  await api.delete(`/api/productos/${id}`);
+}

@@ -63,7 +63,7 @@ export default function AdminPage() {
 
   const handleResolveDispute = async (id: string, state: 'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA', resolution: string) => {
     try {
-      await disputaService.resolverDisputa(id, resolution);
+      await disputaService.resolverDisputa(id, resolution, state);
       setDisputes(prev => prev.map(d => d.id === id ? { ...d, estado: 'RESUELTA' as const, estadoFinalSubasta: state, resolucionAdmin: resolution } : d));
       addLog(`[${new Date().toLocaleTimeString()}] Disputa #${id} resuelta`);
     } catch { /* fallback */ }

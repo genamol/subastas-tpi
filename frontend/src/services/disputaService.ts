@@ -46,7 +46,11 @@ export async function listarDisputasPorSubasta(subastaId: number | string, page 
   };
 }
 
-export async function resolverDisputa(disputaId: number | string, resolucion: string): Promise<Dispute> {
-  const { data } = await api.put<DisputaBackend>(`/api/disputas/${disputaId}/resolver`, { resolucion });
+export async function resolverDisputa(
+  disputaId: number | string,
+  resolucion: string,
+  estadoFinal: 'ADJUDICADA' | 'CANCELADA' | 'FINALIZADA'
+): Promise<Dispute> {
+  const { data } = await api.put<DisputaBackend>(`/api/disputas/${disputaId}/resolver`, { resolucion, estadoFinal });
   return mapDisputaToDispute(data);
 }
