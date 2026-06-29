@@ -14,6 +14,7 @@ import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
 import com.subastas.tpi.service.PujaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,9 @@ public class PujaServiceImpl implements PujaService {
     private final SubastaRepository subastaRepository;
     private final UsuarioRepository usuarioRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Value("${subasta.cierre.extender-segundos:0}")
+    private int extenderSegundos;
 
     @Override
     @Transactional
@@ -80,6 +84,14 @@ public class PujaServiceImpl implements PujaService {
         puja.setFechaPuja(Instant.now());
 
         pujaRepository.save(puja);
+
+        if (extenderSegundos > 0) {
+            Instant ahora = Instant.now();
+            Instant limite = subasta.getFechaCierre().minusSeconds(extenderSegundos);
+            if (ahora.isAfter(limite)) {
+                subasta.setFechaCierre(ahora.plusSeconds(extenderSegundos));
+            }
+        }
 
         subasta.setMontoActual(request.getMonto());
         subasta.setGanador(ofertante);
