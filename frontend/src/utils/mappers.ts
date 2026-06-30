@@ -33,6 +33,7 @@ export function mapPujaToBid(puja: PujaBackend): Bid {
   return {
     id: String(puja.id),
     auctionId: String(puja.subastaId),
+    bidderId: puja.ofertanteId,
     bidderName: puja.ofertanteNombre ?? 'Anónimo',
     bidderAvatar: '',
     amount: puja.monto,
