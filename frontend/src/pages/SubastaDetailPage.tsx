@@ -169,11 +169,21 @@ export default function SubastaDetailPage() {
         <button onClick={() => navigate('/catalogo')} className="text-text-secondary hover:text-text-primary font-bold">Catálogo</button>
         <ChevronRight className="h-3.5 w-3.5 text-text-muted" />
         <span className="text-text-muted font-medium truncate max-w-[200px]">{auction.title}</span>
+
         {isAuthenticated && auction.estado === 'BORRADOR' && (
-          <button onClick={handlePublicar} className="ml-auto flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-400 transition">
-            <Megaphone className="h-3.5 w-3.5" />Publicar
-          </button>
+            <div className="ml-auto flex gap-2">
+              <button
+                  onClick={() => navigate('/crear', { state: { editAuction: auction } })}
+                  className="flex items-center gap-1 rounded-xl bg-input border border-border px-3 py-1.5 text-xs font-bold text-text-primary hover:text-white hover:border-amber-500/30 transition cursor-pointer"
+              >
+                Editar Producto
+              </button>
+              <button onClick={handlePublicar} className="flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-400 transition cursor-pointer">
+                <Megaphone className="h-3.5 w-3.5" />Publicar
+              </button>
+            </div>
         )}
+
         {isAdmin() && auction.estado !== 'CANCELADA' && auction.estado !== 'FINALIZADA' && auction.estado !== 'ADJUDICADA' && (
           <button onClick={handleCancelar} className="ml-auto flex items-center gap-1 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-rose-400 transition">
             <Ban className="h-3.5 w-3.5" />Cancelar
