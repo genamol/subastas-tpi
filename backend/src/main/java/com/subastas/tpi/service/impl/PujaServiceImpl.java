@@ -102,6 +102,7 @@ public class PujaServiceImpl implements PujaService {
             .monto(puja.getMonto())
             .montoActual(subasta.getMontoActual())
             .fechaPuja(puja.getFechaPuja())
+            .fechaCierre(subasta.getFechaCierre())
             .build();
         eventPublisher.publishEvent(new NuevaPujaEvent(subasta.getId(), sseDto, ofertanteId, ofertante.getNombre()));
 
