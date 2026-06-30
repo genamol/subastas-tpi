@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Upload } from 'lucide-react';
 import { subirImagen } from '../services/imagenService';
 import * as subastaService from '../services/subastaService';
@@ -17,13 +17,16 @@ function formatForInput(d: Date): string {
 
 export default function CrearSubastaPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const editAuction = location.state?.editAuction;
+  const isEditMode = !!editAuction;
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [newTitle, setNewTitle] = useState('');
+  const [newTitle, setNewTitle] = useState(editAuction?.title || '');
   const [newCategoryId, setNewCategoryId] = useState<number>(0);
-  const [newImage, setNewImage] = useState('');
-  const [newBasePrice, setNewBasePrice] = useState('');
-  const [newMinIncrement, setNewMinIncrement] = useState('');
-  const [newDescription, setNewDescription] = useState('');
+  const [newImage, setNewImage] = useState(editAuction?.image || '');
+  const [newBasePrice, setNewBasePrice] = useState(editAuction?.startingPrice ? String(editAuction.startingPrice) : '');
+  const [newMinIncrement, setNewMinIncrement] = useState(editAuction?.minIncrement ? String(editAuction.minIncrement) : '');
+  const [newDescription, setNewDescription] = useState(editAuction?.description || '');
   const [iniciarAhora, setIniciarAhora] = useState(true);
   const [fechaInicio, setFechaInicio] = useState(() => formatForInput(new Date(Date.now() + 5 * 60 * 1000)));
   const [fechaCierre, setFechaCierre] = useState(() => formatForInput(new Date(Date.now() + 60 * 60 * 1000)));
@@ -33,15 +36,21 @@ export default function CrearSubastaPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [actionType, setActionType] = useState<'publicar' | 'borrador'>('publicar');
 
   const minFechaInicio = formatForInput(new Date(Date.now() + 2 * 60 * 1000));
 
   useEffect(() => {
     api.get<Categoria[]>('/api/categorias').then(({ data }) => {
       setCategorias(data);
-      if (data.length > 0) setNewCategoryId(data[0].id);
+      if (editAuction) {
+        const cat = data.find(c => c.nombre === editAuction.category);
+        if (cat) setNewCategoryId(cat.id);
+      } else if (data.length > 0) {
+        setNewCategoryId(data[0].id);
+      }
     }).catch(() => {});
-  }, []);
+  }, [editAuction]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,39 +73,62 @@ export default function CrearSubastaPage() {
     e.preventDefault();
     setError('');
 
-    const inicioDate = iniciarAhora ? new Date(Date.now() + 5000) : new Date(fechaInicio);
-    const cierreDate = new Date(fechaCierre);
-
-    if (cierreDate <= inicioDate) {
-      setError('La fecha de cierre debe ser posterior a la de inicio.');
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const producto = await productoService.crearProducto({
-        nombre: newTitle,
-        descripcion: newDescription,
-        categoriaId: newCategoryId,
-        imagenes: newImage ? [newImage] : [],
-      });
+      if (isEditMode) {
+        // MODO EDICIÓN: Solo actualizamos el producto en el backend
+        await productoService.actualizarProducto(Number(editAuction.productoId), {
+          nombre: newTitle,
+          descripcion: newDescription,
+          categoriaId: newCategoryId,
+          imagenes: newImage ? [newImage] : [],
+        });
 
-      const subasta = await subastaService.crearSubasta({
-        productoId: producto.id,
-        precioBase: parseFloat(newBasePrice),
-        incrementoMinimo: parseFloat(newMinIncrement),
-        fechaInicio: inicioDate.toISOString(),
-        fechaCierre: cierreDate.toISOString(),
-        descripcion: newDescription,
-      });
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          navigate(`/subastas/${editAuction.id}`);
+        }, 2000);
+      } else {
 
-      await subastaService.publicarSubasta(Number(subasta.id));
+        const inicioDate = iniciarAhora ? new Date(Date.now() + 5000) : new Date(fechaInicio);
+        const cierreDate = new Date(fechaCierre);
 
-      setSuccess(true);
-      setNewTitle(''); setNewBasePrice(''); setNewMinIncrement(''); setNewDescription(''); setNewImage('');
-      setTimeout(() => { setSuccess(false); navigate('/catalogo'); }, 2000);
+        if (cierreDate <= inicioDate) {
+          setError('La fecha de cierre debe ser posterior a la de inicio.');
+          setSubmitting(false);
+          return;
+        }
+
+        const producto = await productoService.crearProducto({
+          nombre: newTitle,
+          descripcion: newDescription,
+          categoriaId: newCategoryId,
+          imagenes: newImage ? [newImage] : [],
+        });
+
+        const subasta = await subastaService.crearSubasta({
+          productoId: producto.id,
+          precioBase: parseFloat(newBasePrice),
+          incrementoMinimo: parseFloat(newMinIncrement),
+          fechaInicio: inicioDate.toISOString(),
+          fechaCierre: cierreDate.toISOString(),
+          descripcion: newDescription,
+        });
+
+        if (actionType === 'publicar') {
+          await subastaService.publicarSubasta(Number(subasta.id));
+        }
+
+        setSuccess(true);
+        setNewTitle(''); setNewBasePrice(''); setNewMinIncrement(''); setNewDescription(''); setNewImage('');
+        setTimeout(() => {
+          setSuccess(false);
+          navigate(actionType === 'publicar' ? '/catalogo' : '/mis-subastas');
+        }, 2000);
+      }
     } catch {
-      setError('Error al crear la subasta. Verificá los datos e intentá de nuevo.');
+      setError('Error al procesar la solicitud. Verificá los datos.');
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +138,12 @@ export default function CrearSubastaPage() {
     <div className="max-w-xl mx-auto bg-surface border border-border p-6 rounded-2xl animate-fade-in">
       {success && (
         <div className="mb-4 flex items-center space-x-3 rounded-xl border border-emerald-500/20 bg-main/90 p-3 text-xs font-medium text-emerald-400">
-          <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" /><span>¡Subasta creada! Redirigiendo al catálogo...</span>
+          <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+          <span>
+            {actionType === 'publicar'
+              ? '¡Subasta publicada! Redirigiendo al catálogo...'
+              : '¡Borrador guardado! Redirigiendo a mis publicaciones...'}
+          </span>
         </div>
       )}
       {error && <div className="mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-400">{error}</div>}
@@ -125,8 +162,8 @@ export default function CrearSubastaPage() {
         </div>
 
         <div>
-            <label htmlFor="categoria" className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
-            <select id="categoria" value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))}
+          <label htmlFor="categoria" className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Categoría:</label>
+          <select id="categoria" value={newCategoryId} onChange={(e) => setNewCategoryId(Number(e.target.value))}
             className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none">
             <option value={0}>Seleccionar categoría</option>
             {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -138,7 +175,7 @@ export default function CrearSubastaPage() {
             <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Precio Base (ARS):</label>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"><span className="text-text-muted">$</span></div>
-              <input type="number" required value={newBasePrice} onChange={(e) => setNewBasePrice(e.target.value)}
+              <input type="number" required value={newBasePrice} disabled={isEditMode} onChange={(e) => setNewBasePrice(e.target.value)}
                 className="w-full rounded-xl border border-border bg-input py-3 pl-8 pr-3 text-text-primary focus:border-amber-500 focus:outline-none font-mono"
                 placeholder="250" min="1" />
             </div>
@@ -180,7 +217,7 @@ export default function CrearSubastaPage() {
               className="w-full rounded-xl border border-border bg-input p-3 text-text-primary focus:border-amber-500 focus:outline-none" />
           </div>
         </div>
-
+2
         <div>
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Imagen del Producto:</label>
           <div className="flex gap-2">
@@ -202,15 +239,28 @@ export default function CrearSubastaPage() {
           <label className="block text-text-secondary font-bold mb-1.5 uppercase tracking-wider">Descripción Detallada:</label>
           <textarea required value={newDescription} onChange={(e) => setNewDescription(e.target.value)}
             className="w-full h-24 rounded-xl border border-border bg-input p-3 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none leading-relaxed"
-            placeholder="Describe las condiciones, detalles técnicos y procedencia del producto..." />
+            placeholder="Describe las condiciones, detalles técnicos and procedencia del producto..." />
         </div>
 
-        <div className="pt-2">
-          <button type="submit" disabled={submitting}
-            className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-black py-3 text-center text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-lg shadow-amber-500/5 active:scale-98 disabled:opacity-50">
-            {submitting ? 'Creando...' : 'Publicar Artículo'}
-          </button>
-        </div>
+        {isEditMode ? (
+            <div className="pt-2">
+              <button type="submit" disabled={submitting}
+                      className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-black py-3 text-center text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-lg active:scale-98 disabled:opacity-50">
+                {submitting ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+        ) : (
+            <div className="pt-2 flex gap-3">
+              <button type="submit" onClick={() => setActionType('publicar')} disabled={submitting}
+                      className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-black py-3 text-center text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-lg shadow-amber-500/5 active:scale-98 disabled:opacity-50">
+                {submitting && actionType === 'publicar' ? 'Publicando...' : 'Publicar Ahora'}
+              </button>
+              <button type="submit" onClick={() => setActionType('borrador')} disabled={submitting}
+                      className="flex-1 rounded-xl bg-input border border-border hover:border-amber-500/30 text-text-secondary hover:text-text-primary py-3 text-center text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer active:scale-98 disabled:opacity-50">
+                {submitting && actionType === 'borrador' ? 'Guardando...' : 'Guardar Borrador'}
+              </button>
+            </div>
+        )}
       </form>
     </div>
   );

@@ -25,6 +25,7 @@ export function mapSubastaToAuction(subasta: SubastaBackend): Auction {
     vendedorId: subasta.vendedorId,
     ganadorId: subasta.ganadorId,
     ganadorNombre: subasta.ganadorNombre,
+    productoId: subasta.productoId,
   };
 }
 
@@ -32,7 +33,7 @@ export function mapPujaToBid(puja: PujaBackend): Bid {
   return {
     id: String(puja.id),
     auctionId: String(puja.subastaId),
-    bidderId: puja.ofertanteId ?? null,
+    bidderId: puja.ofertanteId,
     bidderName: puja.ofertanteNombre ?? 'Anónimo',
     bidderAvatar: '',
     amount: puja.monto,

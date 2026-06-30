@@ -34,6 +34,7 @@ export interface Auction {
   vendedorId: number;
   ganadorId: number | null;
   ganadorNombre: string | null;
+  productoId: number;
 }
 
 export interface UserProfile {
