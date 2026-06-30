@@ -1,6 +1,7 @@
 export interface Bid {
   id: string;
   auctionId: string;
+  bidderId: number | null;
   bidderName: string;
   bidderAvatar: string;
   amount: number;
@@ -31,6 +32,8 @@ export interface Auction {
   status: 'active' | 'finished';
   estado: string;
   vendedorId: number;
+  ganadorId: number | null;
+  ganadorNombre: string | null;
   productoId: number;
 }
 

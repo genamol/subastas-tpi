@@ -2,6 +2,7 @@ package com.subastas.tpi.controller;
 
 import com.subastas.tpi.dto.request.ActualizarPerfilRequest;
 import com.subastas.tpi.dto.response.UsuarioPerfilResponse;
+import com.subastas.tpi.dto.response.UsuarioPublicoResponse;
 import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -20,6 +21,11 @@ public class UsuarioController {
     @GetMapping("/me")
     public ResponseEntity<UsuarioPerfilResponse> miPerfil(@AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.ok(usuarioService.obtenerPerfil(usuario.getId()));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioPublicoResponse> perfilPublico(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.obtenerPerfilPublico(id));
     }
 
     @PutMapping("/me")

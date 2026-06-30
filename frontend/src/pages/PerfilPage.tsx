@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X, Star } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { obtenerCalificacionesPorUsuario, type CalificacionResponse } from '../services/calificacionService';
+import { getAvatar, setAvatar } from '../utils/privacidad';
+import { AVATARES_ANIMADOS, getAvatarAnimado } from '../components/AvatarAnimado';
 
 interface PerfilData {
   id: number;
@@ -20,19 +23,6 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   USER:   { label: 'Usuario',       color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
 
-function Initials({ nombre }: { nombre: string }) {
-  const foto = localStorage.getItem('foto_perfil');
-  const parts = nombre.trim().split(' ');
-  const ini = parts.length >= 2
-    ? parts[0][0] + parts[1][0]
-    : parts[0].slice(0, 2);
-  return (
-    <div className="h-20 w-20 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-2xl shadow-lg shadow-amber-500/20 select-none overflow-hidden">
-      {foto ? <img src={foto} alt="" className="h-full w-full object-cover" /> : ini.toUpperCase()}
-    </div>
-  );
-}
-
 export default function PerfilPage() {
   const { nombre: nombreCtx } = useAuth();
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
@@ -43,12 +33,27 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveOk, setSaveOk] = useState(false);
+  const [calificaciones, setCalificaciones] = useState<CalificacionResponse[]>([]);
+  const [loadingCalif, setLoadingCalif] = useState(false);
+  const [avatarIdx, setAvatarIdx] = useState<number>(getAvatar);
 
   useEffect(() => {
     api.get<PerfilData>('/api/usuarios/me')
-      .then(({ data }) => setPerfil(data))
+      .then(({ data }) => {
+        setPerfil(data);
+        setLoadingCalif(true);
+        return obtenerCalificacionesPorUsuario(data.id, 0, 20)
+          .then(res => setCalificaciones(res.content))
+          .catch(() => {})
+          .finally(() => setLoadingCalif(false));
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSelectAvatar = (idx: number) => {
+    setAvatar(idx);
+    setAvatarIdx(idx);
+  };
 
   const handleEdit = () => {
     if (!perfil) return;
@@ -94,6 +99,9 @@ export default function PerfilPage() {
     return <div className="py-20 text-center text-text-muted text-sm">No se pudo cargar el perfil.</div>;
   }
 
+  const currentAvatar = getAvatarAnimado(avatarIdx);
+  const CurrentAvatarComp = currentAvatar.Component;
+
   return (
     <div className="max-w-2xl mx-auto space-y-4 animate-fade-in">
 
@@ -105,7 +113,9 @@ export default function PerfilPage() {
 
       {/* Header */}
       <div className="bg-surface border border-border rounded-2xl p-6 flex items-center gap-5">
-        <Initials nombre={perfil.nombre} />
+        <div className="flex-shrink-0">
+          <CurrentAvatarComp size={80} />
+        </div>
         <div className="flex-1 min-w-0">
           <h2 className="font-display text-xl font-bold text-text-primary truncate">{perfil.nombre}</h2>
           <p className="text-xs text-text-muted mt-0.5">{perfil.email}</p>
@@ -127,6 +137,40 @@ export default function PerfilPage() {
         )}
       </div>
 
+      {/* Avatar picker */}
+      <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-text-primary border-b border-border pb-2">
+          Mi Avatar
+        </h3>
+        <p className="text-xs text-text-muted">Elegí tu personaje de subasta. ¡Cada uno tiene su propia personalidad!</p>
+        <div className="grid grid-cols-4 gap-3">
+          {AVATARES_ANIMADOS.map(av => {
+            const Comp = av.Component;
+            const isSelected = avatarIdx === av.id;
+            return (
+              <button
+                key={av.id}
+                onClick={() => handleSelectAvatar(av.id)}
+                title={av.nombre}
+                className={`group flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all border ${
+                  isSelected
+                    ? 'border-amber-500 bg-amber-500/10 shadow-md shadow-amber-500/10'
+                    : 'border-border hover:border-amber-500/40 hover:bg-input'
+                }`}
+              >
+                <Comp size={64} />
+                <span className={`text-[10px] font-bold text-center leading-tight truncate w-full ${
+                  isSelected ? 'text-amber-400' : 'text-text-muted group-hover:text-text-secondary'
+                }`}>
+                  {av.nombre}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-text-muted italic text-center">{currentAvatar.descripcion}</p>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-surface border border-border rounded-2xl p-5 text-center">
@@ -139,6 +183,43 @@ export default function PerfilPage() {
           <span className="block font-mono text-3xl font-extrabold text-text-primary">{perfil.totalSubastas}</span>
           <span className="block text-[11px] text-text-muted uppercase tracking-wider mt-1">Subastas publicadas</span>
         </div>
+      </div>
+
+      {/* Calificaciones recibidas */}
+      <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-border pb-2">
+          <h3 className="font-display font-bold text-sm uppercase tracking-wider text-text-primary flex items-center gap-2">
+            <Star className="h-4 w-4 text-amber-400" /> Calificaciones recibidas
+          </h3>
+          {calificaciones.length > 0 && (
+            <span className="text-xs font-mono font-bold text-amber-400">
+              {(calificaciones.reduce((s, c) => s + c.puntuacion, 0) / calificaciones.length).toFixed(1)} ★ promedio
+            </span>
+          )}
+        </div>
+
+        {loadingCalif ? (
+          <div className="py-6 text-center">
+            <div className="h-5 w-5 mx-auto animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+          </div>
+        ) : calificaciones.length === 0 ? (
+          <p className="text-xs text-text-muted text-center py-4">Aún no recibiste calificaciones.</p>
+        ) : (
+          <div className="space-y-3">
+            {calificaciones.map(c => (
+              <div key={c.id} className="bg-input border border-border/60 rounded-xl p-3 text-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-text-primary">{c.calificadorNombre}</span>
+                  <span className="font-mono text-amber-400 font-bold">{'★'.repeat(c.puntuacion)}{'☆'.repeat(5 - c.puntuacion)}</span>
+                </div>
+                {c.comentario && <p className="text-text-secondary leading-relaxed">{c.comentario}</p>}
+                <span className="block mt-1 text-[10px] text-text-muted">
+                  {new Date(c.fechaCreacion).toLocaleDateString('es-ES')}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info / Edit */}

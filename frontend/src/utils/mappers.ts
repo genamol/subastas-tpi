@@ -23,6 +23,8 @@ export function mapSubastaToAuction(subasta: SubastaBackend): Auction {
     status: mapEstadoToStatus(subasta.estado),
     estado: subasta.estado,
     vendedorId: subasta.vendedorId,
+    ganadorId: subasta.ganadorId,
+    ganadorNombre: subasta.ganadorNombre,
     productoId: subasta.productoId,
   };
 }

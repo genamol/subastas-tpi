@@ -2,6 +2,7 @@ package com.subastas.tpi.service.impl;
 
 import com.subastas.tpi.dto.request.ActualizarPerfilRequest;
 import com.subastas.tpi.dto.response.UsuarioPerfilResponse;
+import com.subastas.tpi.dto.response.UsuarioPublicoResponse;
 import com.subastas.tpi.dto.response.UsuarioResponse;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.Usuario;
@@ -59,6 +60,22 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
         usuario.setBloqueado(false);
         usuarioRepository.save(usuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UsuarioPublicoResponse obtenerPerfilPublico(Long id) {
+        Usuario u = buscarOFallar(id);
+        long totalPujas = pujaRepository.countByOfertanteId(u.getId());
+        long totalSubastas = subastaRepository.countByVendedorId(u.getId());
+        return UsuarioPublicoResponse.builder()
+                .id(u.getId())
+                .nombre(u.getNombre())
+                .roles(u.getRoles().stream().map(r -> r.getNombre().name()).toList())
+                .createdAt(u.getCreatedAt())
+                .totalPujas(totalPujas)
+                .totalSubastas(totalSubastas)
+                .build();
     }
 
     private Usuario buscarOFallar(Long id) {

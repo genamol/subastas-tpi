@@ -1,6 +1,7 @@
 package com.subastas.tpi.service;
 
 import com.subastas.tpi.dto.response.UsuarioPerfilResponse;
+import com.subastas.tpi.dto.response.UsuarioPublicoResponse;
 import com.subastas.tpi.dto.request.ActualizarPerfilRequest;
 import com.subastas.tpi.dto.response.UsuarioResponse;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 public interface UsuarioService {
 
     UsuarioResponse obtenerPorId(Long id);
+
+    UsuarioPublicoResponse obtenerPerfilPublico(Long id);
 
     Page<UsuarioResponse> listarTodos(Pageable pageable);
 

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SubastaRepository extends JpaRepository<Subasta, Long> {
-
+    //enfoque pesismista para evitar que 2 usuarios se adjudiquen la misma subasta al mismo tiempo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
     @Query("SELECT s FROM Subasta s WHERE s.id = :id")
@@ -34,7 +34,8 @@ public interface SubastaRepository extends JpaRepository<Subasta, Long> {
 
     long countByVendedorId(Long vendedorId);
     Page<Subasta> findByVendedorId(Long vendedorId, Pageable pageable);
-
+     
+    //esta Query la hacemos 
     @Query("SELECT s FROM Subasta s WHERE s.estado IN :estados " +
            "AND (s.fechaAdjudicacion IS NULL OR s.fechaAdjudicacion > :limite)")
     Page<Subasta> findVisibles(@Param("estados") List<EstadoSubasta> estados,
