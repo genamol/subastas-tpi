@@ -8,6 +8,7 @@ import com.subastas.tpi.model.ImagenProducto;
 import com.subastas.tpi.model.Producto;
 import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.model.enums.EstadoSubasta;
+import com.subastas.tpi.model.enums.RolNombre;
 import com.subastas.tpi.repository.CategoriaRepository;
 import com.subastas.tpi.repository.ProductoRepository;
 import com.subastas.tpi.repository.SubastaRepository;
@@ -76,8 +77,29 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
 
-        if (!producto.getVendedor().getId().equals(vendedorId)) {
-            throw new BusinessException("producto.no.autorizado", HttpStatus.FORBIDDEN);
+        Usuario usuario = usuarioRepository.findById(vendedorId)
+                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+
+        boolean esAdmin = usuario.getRoles().stream()
+                .anyMatch(rol -> rol.getNombre() == RolNombre.ADMIN);
+
+        // Si no es admin, aplicamos las restricciones del negocio
+        if (!esAdmin) {
+            if (!producto.getVendedor().getId().equals(vendedorId)) {
+                throw new BusinessException("producto.no.autorizado", HttpStatus.FORBIDDEN);
+            }
+
+            List<EstadoSubasta> estadosRestringidos = List.of(
+                    EstadoSubasta.PUBLICADA,
+                    EstadoSubasta.ACTIVA,
+                    EstadoSubasta.FINALIZADA,
+                    EstadoSubasta.ADJUDICADA,
+                    EstadoSubasta.EN_DISPUTA
+            );
+
+            if (subastaRepository.existsByProductoIdAndEstadoIn(id, estadosRestringidos)) {
+                throw new BusinessException("producto.edicion.prohibida", HttpStatus.BAD_REQUEST);
+            }
         }
 
         Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
@@ -87,7 +109,6 @@ public class ProductoServiceImpl implements ProductoService {
         producto.setDescripcion(request.getDescripcion());
         producto.setCategoria(categoria);
 
-
         producto.getImagenes().clear();
         if (request.getImagenes() != null) {
             for (int i = 0; i < request.getImagenes().size(); i++) {
@@ -96,9 +117,7 @@ public class ProductoServiceImpl implements ProductoService {
                 img.setOrden(i + 1);
                 img.setProducto(producto);
                 producto.getImagenes().add(img);
-
             }
-
         }
 
         Producto actualizado = productoRepository.save(producto);
@@ -131,7 +150,6 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
 
-
         if (!producto.getVendedor().getId().equals(vendedorId)) {
             throw new BusinessException("producto.no.autorizado", HttpStatus.FORBIDDEN);
         }
@@ -148,8 +166,6 @@ public class ProductoServiceImpl implements ProductoService {
 
         productoRepository.delete(producto);
     }
-
-
 
     private ProductoResponse mapToResponse(Producto producto) {
         List<String> urlsImagenes = producto.getImagenes().stream()
