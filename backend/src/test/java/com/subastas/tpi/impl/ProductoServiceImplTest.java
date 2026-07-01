@@ -1,4 +1,4 @@
-package com.subastas.tpi.service.impl;
+package com.subastas.tpi.impl;
 
 import com.subastas.tpi.dto.request.ProductoRequest;
 import com.subastas.tpi.dto.response.ProductoResponse;
@@ -8,11 +8,12 @@ import com.subastas.tpi.model.Producto;
 import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.model.Rol;
 import com.subastas.tpi.model.enums.RolNombre;
-import com.subastas.tpi.model.enums.EstadoSubasta;
 import com.subastas.tpi.repository.CategoriaRepository;
 import com.subastas.tpi.repository.ProductoRepository;
 import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
+import com.subastas.tpi.service.impl.ProductoServiceImpl;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

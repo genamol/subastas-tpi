@@ -1,4 +1,4 @@
-package com.subastas.tpi.service.impl;
+package com.subastas.tpi.impl;
 
 import com.subastas.tpi.dto.request.CategoriaRequest;
 import com.subastas.tpi.dto.response.CategoriaResponse;
@@ -6,6 +6,8 @@ import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.Categoria;
 import com.subastas.tpi.repository.CategoriaRepository;
 import com.subastas.tpi.repository.ProductoRepository;
+import com.subastas.tpi.service.impl.CategoriaServiceImpl;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
