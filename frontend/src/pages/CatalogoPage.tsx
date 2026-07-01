@@ -64,12 +64,16 @@ export default function CatalogoPage() {
     });
   }, []);
 
-  const filteredAuctions = auctions.filter(a => {
-    const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
-    const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          a.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const estadoOrden: Record<string, number> = { ACTIVA: 0, PUBLICADA: 1, ADJUDICADA: 2, FINALIZADA: 3 };
+
+  const filteredAuctions = auctions
+    .filter(a => {
+      const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
+      const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            a.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => (estadoOrden[a.estado ?? ''] ?? 99) - (estadoOrden[b.estado ?? ''] ?? 99));
 
   const handleSelectAuction = (auction: Auction) => {
     navigate(`/subastas/${auction.id}`);

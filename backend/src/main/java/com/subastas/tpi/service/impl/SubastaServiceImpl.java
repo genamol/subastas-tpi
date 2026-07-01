@@ -168,8 +168,8 @@ public class SubastaServiceImpl implements SubastaService {
     public Page<SubastaResponse> obtenerTodas(Pageable pageable) {
         Instant limite = Instant.now().minus(visibilidadHoras, ChronoUnit.HOURS);
         return subastaRepository.findVisibles(
-                List.of(EstadoSubasta.PUBLICADA, EstadoSubasta.ACTIVA, EstadoSubasta.FINALIZADA,
-                        EstadoSubasta.ADJUDICADA),
+                List.of(EstadoSubasta.PUBLICADA, EstadoSubasta.ACTIVA, EstadoSubasta.ADJUDICADA),
+                List.of(EstadoSubasta.FINALIZADA),
                 limite,
                 pageable).map(this::mapToResponse);
     }
