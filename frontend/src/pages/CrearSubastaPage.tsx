@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Upload } from 'lucide-react';
+import { subirAImgbb } from '../services/imgbbService';
 import { subirImagen } from '../services/imagenService';
 import * as subastaService from '../services/subastaService';
 import * as productoService from '../services/productoService';
@@ -60,7 +61,12 @@ export default function CrearSubastaPage() {
     setUploadError('');
     setUploading(true);
     try {
-      const url = await subirImagen(file);
+      let url = '';
+      try {
+        url = await subirImagen(file);
+      } catch {
+        url = await subirAImgbb(file);
+      }
       setNewImage(url);
     } catch {
       setUploadError('Error al subir la imagen');

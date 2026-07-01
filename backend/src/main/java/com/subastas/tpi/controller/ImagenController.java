@@ -2,13 +2,12 @@ package com.subastas.tpi.controller;
 
 import com.subastas.tpi.dto.response.ImagenResponse;
 import com.subastas.tpi.exception.BusinessException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -25,24 +24,6 @@ public class ImagenController {
     private static final long MAX_SIZE = 5 * 1024 * 1024;
     private static final Set<String> TIPOS_PERMITIDOS = Set.of("image/jpeg", "image/png");
 
-    private final RestTemplate restTemplate;
-
-    @Value("${storage.s3.endpoint:}")
-    private String endpoint;
-
-    @Value("${storage.s3.bucket:}")
-    private String bucket;
-
-    @Value("${storage.s3.access-key:}")
-    private String accessKey;
-
-    @Value("${storage.s3.secret-key:}")
-    private String secretKey;
-
-    public ImagenController() {
-        this.restTemplate = new RestTemplate();
-    }
-
     @PostMapping("/upload")
     public ResponseEntity<ImagenResponse> upload(@RequestParam MultipartFile file) throws IOException {
         if (file.getSize() > MAX_SIZE) {
@@ -55,38 +36,9 @@ public class ImagenController {
         }
 
         String nombre = UUID.randomUUID() + "_" + file.getOriginalFilename();
-
-        if (endpoint != null && !endpoint.isEmpty()
-                && accessKey != null && !accessKey.isEmpty()
-                && secretKey != null && !secretKey.isEmpty()
-                && bucket != null && !bucket.isEmpty()) {
-            try {
-                return uploadS3(file, nombre, contentType);
-            } catch (Exception e) {
-                return uploadLocal(file, nombre);
-            }
-        }
-        return uploadLocal(file, nombre);
-    }
-
-    private ResponseEntity<ImagenResponse> uploadS3(MultipartFile file, String nombre, String contentType) throws IOException {
-        String s3Url = endpoint + "/" + bucket + "/" + nombre;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(contentType));
-        headers.setBasicAuth(accessKey, secretKey);
-
-        HttpEntity<byte[]> request = new HttpEntity<>(file.getBytes(), headers);
-        restTemplate.exchange(s3Url, HttpMethod.PUT, request, String.class);
-
-        return ResponseEntity.ok(new ImagenResponse(s3Url));
-    }
-
-    private ResponseEntity<ImagenResponse> uploadLocal(MultipartFile file, String nombre) throws IOException {
         Path dir = Paths.get("uploads");
         Files.createDirectories(dir);
-        Path ruta = dir.resolve(nombre);
-        Files.copy(file.getInputStream(), ruta);
+        Files.copy(file.getInputStream(), dir.resolve(nombre));
 
         return ResponseEntity.ok(new ImagenResponse("/uploads/" + nombre));
     }
