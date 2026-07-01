@@ -1,79 +1,78 @@
-# 🔨 QUIEN DA MA$
+# QUIEN DA MA$
 
-> Plataforma de subastas online en tiempo real — TPI Programación IV · UTN FRVM
+Plataforma de subastas online en tiempo real desarrollada como Trabajo Práctico Integrador para la materia **Programación IV** — UTN FRVM.
 
-**Integrantes:** Genaro Molina · Paulo Zito · Maxi Zampa
+[![Backend](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Frontend](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Deploy](https://img.shields.io/badge/Deploy-Railway-0B0D0E?logo=railway)](https://railway.app)
 
 ---
 
-## Demo
+## Acceso
 
-| | URL |
+| | |
 |---|---|
-| **Frontend** | https://quiendamas.up.railway.app/ |
-| **API REST** | https://worthy-respect-production-4be9.up.railway.app/ |
-| **Swagger UI** | https://worthy-respect-production-4be9.up.railway.app/swagger-ui.html |
+| **Aplicación web** | https://quiendamas.up.railway.app |
+| **API REST** | https://worthy-respect-production-4be9.up.railway.app |
+| **Documentación API** | https://worthy-respect-production-4be9.up.railway.app/swagger-ui.html |
 
 ---
 
-## Stack tecnológico
+## Stack
 
-**Backend**
-- Java 17 · Spring Boot 3 · Spring Security 6 · Spring Data JPA
-- PostgreSQL · Lombok · Springdoc OpenAPI (Swagger)
-- Autenticación JWT (doble token: Access 15 min + Refresh 7 días en cookie HttpOnly)
-- SSE (Server-Sent Events) con sistema de tickets efímeros
-- Rate limiting con ventana deslizante (`ConcurrentHashMap<String, Deque<Instant>>`)
-- Bloqueo pesimista (`SELECT FOR UPDATE`) para control de concurrencia en pujas
+**Backend** — Java 17 · Spring Boot 3 · Spring Security 6 · Spring Data JPA · PostgreSQL · Lombok · Springdoc OpenAPI
 
-**Frontend**
-- React 19 · TypeScript · Vite
-- Tailwind CSS 4 · Axios · React Router DOM · lucide-react
-- `EventSource` nativo para SSE
+**Frontend** — React 19 · TypeScript · Vite · Tailwind CSS 4 · Axios · React Router DOM
 
 ---
 
-## Funcionalidades principales
+## Funcionalidades
 
-- Registro e inicio de sesión con roles (`USER`, `SELLER`, `ADMIN`)
-- Publicación de productos con imágenes
-- Creación y publicación de subastas con precio base e incremento mínimo
-- Pujas en tiempo real vía SSE (precios y participantes censurados durante la subasta)
-- Cierre automático con scheduler cada 30 segundos (ADJUDICADA / FINALIZADA)
-- **Soft-close**: pujas en el último minuto extienden el cierre 60 segundos
+- Autenticación con doble token JWT (Access Token 15 min + Refresh Token 7 días en cookie `HttpOnly`)
+- Rate limiting por ventana deslizante sobre endpoints críticos
+- Pujas en tiempo real mediante SSE con sistema de tickets efímeros
+- Identidades censuradas durante subastas activas (privacidad de oferentes)
+- Cierre automático programado (scheduler cada 30 segundos)
+- Soft-close: pujas en el último minuto extienden el cierre 60 segundos
+- Control de concurrencia con bloqueo pesimista (`SELECT FOR UPDATE`)
+- Historial completo de cambios de estado por subasta
 - Sistema de disputas con resolución por administrador
-- Calificaciones entre usuarios tras adjudicación
-- Notificaciones en tiempo real (ganador, vendedor, disputas)
-- Panel de administración con SSE global
-- Avatares animados por usuario
+- Notificaciones en tiempo real por usuario
+- Calificaciones entre participantes tras adjudicación
+- Panel de administración con vista global en tiempo real
 
 ---
 
-## Estructura del monorepo
+## Estructura del proyecto
 
 ```
-proyecto/
-├── backend/        # Spring Boot (Java 17)
-│   └── src/
-│       ├── main/java/com/subastas/tpi/
-│       │   ├── controller/
-│       │   ├── service/impl/
-│       │   ├── repository/
-│       │   ├── model/ · dto/ · event/ · security/ · scheduler/
-│       │   └── exception/ · config/
-│       └── test/java/com/subastas/tpi/impl/
-└── frontend/       # React + Vite + TypeScript
+/
+├── backend/                        # API Spring Boot
+│   └── src/main/java/.../
+│       ├── controller/             # Endpoints REST
+│       ├── service/impl/           # Lógica de negocio
+│       ├── repository/             # Acceso a datos (JPA)
+│       ├── model/ · dto/           # Entidades y DTOs
+│       ├── event/                  # Patrón Observer (ApplicationEvents)
+│       ├── security/               # JWT, rate limiting, tickets SSE
+│       ├── scheduler/              # Cierre automático de subastas
+│       └── exception/              # Manejo global de errores
+└── frontend/                       # SPA React + TypeScript
     └── src/
-        ├── pages/ · components/ · hooks/
-        ├── services/ · context/ · utils/
-        └── types.ts
+        ├── pages/                  # Vistas principales
+        ├── components/             # Componentes reutilizables
+        ├── hooks/                  # useSse, useAuth, useSubastas
+        ├── services/               # Clientes HTTP (Axios) y SSE
+        ├── context/                # AuthContext, NotificacionesContext
+        └── utils/                  # Mappers, privacidad, avatares
 ```
 
 ---
 
 ## Correr localmente
 
-### Requisitos previos
+### Requisitos
+
 - Java 17+
 - Node.js 20+
 - PostgreSQL 15+
@@ -82,16 +81,15 @@ proyecto/
 
 ```bash
 cd backend
-
-# Crear base de datos
-psql -U postgres -c "CREATE DATABASE subastas_db;"
-
-# Variables de entorno (o editar application.yaml)
-export JWT_SECRET=claveSecretaSuperSeguraParaLaUtnFrvmProgramacionCuatro2026
-
-./mvnw spring-boot:run
-# API disponible en http://localhost:8080
 ```
+
+Crear un archivo `.env` o configurar las variables de entorno (ver sección siguiente), luego:
+
+```bash
+./mvnw spring-boot:run
+```
+
+La API queda disponible en `http://localhost:8080`.
 
 ### Frontend
 
@@ -99,52 +97,56 @@ export JWT_SECRET=claveSecretaSuperSeguraParaLaUtnFrvmProgramacionCuatro2026
 cd frontend
 npm install
 npm run dev
-# App disponible en http://localhost:5173
 ```
+
+La app queda disponible en `http://localhost:5173`.
 
 ---
 
-## Variables de entorno (producción)
+## Variables de entorno
 
-```env
-# Backend
-DB_URL=jdbc:postgresql://<host>:<port>/<db>
-DB_USERNAME=...
-DB_PASSWORD=...
-JWT_SECRET=...
-CORS_ALLOWED_ORIGINS=https://quiendamas.up.railway.app,http://localhost:5173
-SPRING_PROFILES_ACTIVE=prod
+### Backend
 
-# Frontend
-VITE_API_URL=https://worthy-respect-production-4be9.up.railway.app
-```
-
----
-
-## Seguridad — OWASP Top 10 2021
-
-| Riesgo | Implementación |
+| Variable | Descripción |
 |---|---|
-| A01 Broken Access Control | `@PreAuthorize` + verificación de ownership en servicios |
-| A02 Cryptographic Failures | BCrypt · JWT HMAC-SHA · Refresh Token en cookie `HttpOnly` |
-| A03 Injection | Consultas JPA parametrizadas · `@Valid` en todos los `@RequestBody` |
-| A04 Insecure Design | Fechas y montos determinados por el servidor |
-| A05 Security Misconfiguration | CORS con origen explícito · stack traces ocultos al cliente |
-| A07 Authentication Failures | Doble token · blacklist de refresh tokens · rate limiting |
+| `DB_URL` | URL JDBC de PostgreSQL |
+| `DB_USERNAME` | Usuario de la base de datos |
+| `DB_PASSWORD` | Contraseña de la base de datos |
+| `JWT_SECRET` | Clave secreta para firma de tokens (mín. 32 caracteres) |
+| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos separados por coma |
+| `SPRING_PROFILES_ACTIVE` | Perfil activo (`prod` en producción) |
+
+### Frontend
+
+| Variable | Descripción |
+|---|---|
+| `VITE_API_URL` | URL base de la API REST |
 
 ---
 
-## Pruebas
+## Tests
 
 ```bash
 cd backend
 ./mvnw test
 ```
 
-Clases de prueba: `CategoriaServiceImplTest` · `ProductoServiceImplTest` · `SubastaServiceImplTest`
+| Clase | Módulo |
+|---|---|
+| `CategoriaServiceImplTest` | Servicio de categorías |
+| `ProductoServiceImplTest` | Servicio de productos |
+| `SubastaServiceImplTest` | Servicio de subastas |
 
 ---
 
-## Repositorio
+## Equipo
 
-https://github.com/genamol/subastas-tpi
+| Integrante | Contribuciones principales |
+|---|---|
+| **Genaro Molina** | Setup del proyecto, entidades JPA, repositorios, enums, seguridad, SSE, pujas, frontend |
+| **Paulo Zito** | DTOs de Categoria, Producto y Subasta; servicios de Categoria; pruebas unitarias |
+| **Maxi Zampa** | Historial de subastas, disputas, calificaciones, scheduler, revisión general |
+
+---
+
+*TPI — Programación IV — UTN FRVM — 2026*
