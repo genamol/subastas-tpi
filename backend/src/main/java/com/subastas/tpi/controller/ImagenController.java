@@ -56,8 +56,15 @@ public class ImagenController {
 
         String nombre = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
-        if (endpoint != null && !endpoint.isEmpty()) {
-            return uploadS3(file, nombre, contentType);
+        if (endpoint != null && !endpoint.isEmpty()
+                && accessKey != null && !accessKey.isEmpty()
+                && secretKey != null && !secretKey.isEmpty()
+                && bucket != null && !bucket.isEmpty()) {
+            try {
+                return uploadS3(file, nombre, contentType);
+            } catch (Exception e) {
+                return uploadLocal(file, nombre);
+            }
         }
         return uploadLocal(file, nombre);
     }
@@ -70,12 +77,7 @@ public class ImagenController {
         headers.setBasicAuth(accessKey, secretKey);
 
         HttpEntity<byte[]> request = new HttpEntity<>(file.getBytes(), headers);
-
-        try {
-            restTemplate.exchange(s3Url, HttpMethod.PUT, request, String.class);
-        } catch (Exception e) {
-            throw new BusinessException("imagen.error.upload", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        restTemplate.exchange(s3Url, HttpMethod.PUT, request, String.class);
 
         return ResponseEntity.ok(new ImagenResponse(s3Url));
     }
