@@ -35,6 +35,8 @@ export interface Auction {
   ganadorId: number | null;
   ganadorNombre: string | null;
   productoId: number;
+  estadoPago: string | null;
+  fechaLimitePago: string | null;
 }
 
 export interface UserProfile {

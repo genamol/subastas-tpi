@@ -35,4 +35,6 @@ public class SubastaResponse {
     private Long ganadorId;
     private String ganadorNombre;
     private Double vendedorCalificacionPromedio;
+    private String estadoPago;
+    private Instant fechaLimitePago;
 }

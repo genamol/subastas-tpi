@@ -5,5 +5,6 @@ public enum TipoNotificacion {
     VENDEDOR_ADJUDICACION,
     NUEVA_PUJA,
     DISPUTA_ABIERTA,
-    DISPUTA_RESUELTA
+    DISPUTA_RESUELTA,
+    PAGO_VENCIDO
 }

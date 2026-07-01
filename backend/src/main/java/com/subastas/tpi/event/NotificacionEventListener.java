@@ -22,4 +22,10 @@ public class NotificacionEventListener {
                 Objects.requireNonNull(event.subastaId()), event.datos().getMonto());
         eventPublisher.publishEvent(new NotificacionCreadaEvent(notificacion));
     }
+
+    @EventListener
+    public void onPagoVencido(PagoVencidoEvent event) {
+        Notificacion notificacion = notificacionService.notificarVendedorPagoVencido(event.subastaId());
+        eventPublisher.publishEvent(new NotificacionCreadaEvent(notificacion));
+    }
 }

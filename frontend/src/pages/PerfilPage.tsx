@@ -3,7 +3,7 @@ import { User, Mail, Phone, Calendar, Gavel, Package, Edit2, Check, X, Star } fr
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { obtenerCalificacionesPorUsuario, type CalificacionResponse } from '../services/calificacionService';
-import { getAvatar, setAvatar } from '../utils/privacidad';
+import { getAvatar, setAvatar, censorName } from '../utils/privacidad';
 import { AVATARES_ANIMADOS, getAvatarAnimado } from '../components/AvatarAnimado';
 
 interface PerfilData {
@@ -209,7 +209,7 @@ export default function PerfilPage() {
             {calificaciones.map(c => (
               <div key={c.id} className="bg-input border border-border/60 rounded-xl p-3 text-xs">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-text-primary">{c.calificadorNombre}</span>
+                  <span className="font-bold text-text-primary">{censorName(c.calificadorNombre)}</span>
                   <span className="font-mono text-amber-400 font-bold">{'★'.repeat(c.puntuacion)}{'☆'.repeat(5 - c.puntuacion)}</span>
                 </div>
                 {c.comentario && <p className="text-text-secondary leading-relaxed">{c.comentario}</p>}

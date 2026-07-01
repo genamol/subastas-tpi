@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, Gavel } from 'lucide-react';
+import { censorName } from '../utils/privacidad';
 import { useNavigate } from 'react-router-dom';
 import { useSubastas } from '../hooks/useSubastas';
 import { useSse } from '../hooks/useSse';
@@ -10,39 +11,72 @@ import type { Auction } from '../types';
 
 interface Categoria { id: number; nombre: string; }
 
-function formatCountdown(endTime: string): { text: string; urgent: boolean; ended: boolean } {
-  const diff = new Date(endTime).getTime() - Date.now();
-  if (diff <= 0) return { text: 'Finalizada', urgent: false, ended: true };
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  if (days > 0) return { text: `${days}d ${hours}hs`, urgent: false, ended: false };
-  if (hours > 0) return { text: `${hours}hs ${mins}min`, urgent: diff < 86400000, ended: false };
-  return { text: `${mins}min`, urgent: true, ended: false };
+function formatDiff(ms: number): string {
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  const mins = Math.floor((ms % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hours}hs`;
+  if (hours > 0) return `${hours}hs ${mins}min`;
+  return `${mins}min`;
 }
 
-function CardCountdown({ endTime }: { endTime: string }) {
-  const [info, setInfo] = useState(() => formatCountdown(endTime));
-  useEffect(() => {
-    const interval = setInterval(() => setInfo(formatCountdown(endTime)), 1000);
-    return () => clearInterval(interval);
-  }, [endTime]);
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
-  if (info.ended) {
+function CardTimeBadge({ estado, startTime, endTime }: { estado: string; startTime: string | null; endTime: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (estado === 'PUBLICADA') {
+    if (!startTime) {
+      return (
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-sky-950/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-sky-300 border border-sky-500/30">
+          <Clock className="h-3.5 w-3.5" />Sin fecha de inicio
+        </div>
+      );
+    }
+    const diffStart = new Date(startTime).getTime() - now;
     return (
-      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
-        <Clock className="h-3.5 w-3.5" />Finalizada
+      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-sky-950/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-sky-300 border border-sky-500/30">
+        <Clock className="h-3.5 w-3.5" />
+        {diffStart > 0 ? `Inicia en ${formatDiff(diffStart)}` : `Inicia: ${formatDate(startTime)}`}
       </div>
     );
   }
-  return (
-    <div className={`absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg backdrop-blur px-2.5 py-1 text-[11px] font-semibold border ${
-      info.urgent ? 'bg-rose-950/90 text-rose-300 border-rose-500/30 animate-pulse' : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/20'
-    }`}>
-      <Clock className={`h-3.5 w-3.5 ${info.urgent ? 'text-rose-400' : 'text-emerald-400'}`} />{info.text}
-    </div>
-  );
+
+  if (estado === 'ACTIVA') {
+    const diffEnd = new Date(endTime).getTime() - now;
+    if (diffEnd <= 0) {
+      return (
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
+          <Clock className="h-3.5 w-3.5" />Cerrando...
+        </div>
+      );
+    }
+    const urgent = diffEnd < 3600000;
+    return (
+      <div className={`absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg backdrop-blur px-2.5 py-1 text-[11px] font-semibold border ${
+        urgent ? 'bg-rose-950/90 text-rose-300 border-rose-500/30 animate-pulse' : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/20'
+      }`}>
+        <Clock className={`h-3.5 w-3.5 ${urgent ? 'text-rose-400' : 'text-emerald-400'}`} />{formatDiff(diffEnd)}
+      </div>
+    );
+  }
+
+  return null;
 }
+
+const ESTADO_BADGE: Record<string, string> = {
+  ACTIVA: 'text-amber-500',
+  PUBLICADA: 'text-sky-400',
+  ADJUDICADA: 'text-emerald-400',
+  FINALIZADA: 'text-slate-400',
+  CANCELADA: 'text-rose-400',
+};
 
 export default function CatalogoPage() {
   const { auctions, loading, error, pujar, recargar } = useSubastas();
@@ -53,6 +87,7 @@ export default function CatalogoPage() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [selectedEstado, setSelectedEstado] = useState('Todos');
   const [bidError, setBidError] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<string[]>([]);
 
@@ -64,12 +99,25 @@ export default function CatalogoPage() {
     });
   }, []);
 
-  const filteredAuctions = auctions.filter(a => {
-    const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
-    const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          a.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const estadoOrden: Record<string, number> = { ACTIVA: 0, PUBLICADA: 1, ADJUDICADA: 2, FINALIZADA: 3 };
+
+  const filteredAuctions = auctions
+    .filter(a => {
+      const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
+      const matchesEstado = selectedEstado === 'Todos' || a.estado === selectedEstado;
+      const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            a.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesEstado && matchesSearch;
+    })
+    .sort((a, b) => {
+      const estadoDiff = (estadoOrden[a.estado ?? ''] ?? 99) - (estadoOrden[b.estado ?? ''] ?? 99);
+      if (estadoDiff !== 0) return estadoDiff;
+      const endA = new Date(a.endTime).getTime();
+      const endB = new Date(b.endTime).getTime();
+      if (a.estado === 'ACTIVA') return endA - endB; // menos tiempo restante primero
+      if (a.estado === 'ADJUDICADA' || a.estado === 'FINALIZADA') return endB - endA; // más reciente primero
+      return 0;
+    });
 
   const handleSelectAuction = (auction: Auction) => {
     navigate(`/subastas/${auction.id}`);
@@ -93,28 +141,46 @@ export default function CatalogoPage() {
       {bidError && (
         <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-400">{bidError}</div>
       )}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border">
-        <div className="relative w-full md:w-80">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar artículos (ej. MacBook, Fender)..."
-            className="w-full rounded-xl border border-border bg-input py-2 px-4 text-xs text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-          />
+      <div className="flex flex-col gap-3 bg-surface p-4 rounded-2xl border border-border">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="relative w-full md:w-80">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar artículos (ej. MacBook, Fender)..."
+              className="w-full rounded-xl border border-border bg-input py-2 px-4 text-xs text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto overflow-x-auto max-w-full">
+            {categorias.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/10'
+                    : 'bg-input border border-border text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto overflow-x-auto max-w-full">
-          {categorias.map(cat => (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-3">
+          <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold mr-1">Estado:</span>
+          {(['Todos', 'ACTIVA', 'PUBLICADA', 'ADJUDICADA', 'FINALIZADA'] as const).map(est => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              key={est}
+              onClick={() => setSelectedEstado(est)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                selectedCategory === cat
+                selectedEstado === est
                   ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/10'
                   : 'bg-input border border-border text-text-secondary hover:text-text-primary'
               }`}
             >
-              {cat}
+              {est === 'Todos' ? 'Todos' : est.charAt(0) + est.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
@@ -133,20 +199,22 @@ export default function CatalogoPage() {
           {filteredAuctions.map(auc => (
             <div key={auc.id} className="cursor-pointer" onClick={() => handleSelectAuction(auc)}>
               <div className="relative group rounded-2xl border border-border bg-surface overflow-hidden hover:border-border/80 transition-all duration-300">
-                <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-primary backdrop-blur">
-                  <span className="text-amber-500 font-bold uppercase mr-1">
-                    {new Date(auc.endTime).getTime() > Date.now() ? 'ACTIVA' : 'FINALIZADA'}
-                  </span>
-                  {auc.category}
+                <div className={`absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase backdrop-blur ${ESTADO_BADGE[auc.estado] ?? 'text-text-muted'}`}>
+                  {auc.estado}
                 </div>
+                {auc.category && (
+                  <div className="absolute top-3 right-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-muted backdrop-blur">
+                    {auc.category}
+                  </div>
+                )}
                 <div className="aspect-video w-full overflow-hidden bg-input/60 relative">
                   {auc.image ? <img src={auc.image} alt={auc.title} className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500 opacity-80 group-hover:opacity-100" /> : <div className="h-full w-full bg-input" />}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-transparent to-transparent" />
-                  <CardCountdown endTime={auc.endTime} />
+                  <CardTimeBadge estado={auc.estado} startTime={auc.createdAt} endTime={auc.endTime} />
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between text-[11px] text-text-muted mb-2">
-                    <span>Vendedor: {auc.seller.name}</span>
+                    <span>Vendedor: {censorName(auc.seller.name)}</span>
                     {auc.seller.rating > 0 && (
                       <span className="text-amber-500">{auc.seller.rating.toFixed(1)} ★</span>
                     )}

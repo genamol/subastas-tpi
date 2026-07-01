@@ -30,15 +30,18 @@ public interface SubastaRepository extends JpaRepository<Subasta, Long> {
 
     List<Subasta> findByEstadoAndFechaCierreBefore(EstadoSubasta estado, Instant fecha);
 
+    List<Subasta> findByEstadoAndFechaAdjudicacionBefore(EstadoSubasta estado, Instant fecha);
+
     boolean existsByProductoIdAndEstadoIn(Long productoId, List<EstadoSubasta> estados);
 
     long countByVendedorId(Long vendedorId);
     Page<Subasta> findByVendedorId(Long vendedorId, Pageable pageable);
      
-    //esta Query la hacemos 
-    @Query("SELECT s FROM Subasta s WHERE s.estado IN :estados " +
-           "AND (s.fechaAdjudicacion IS NULL OR s.fechaAdjudicacion > :limite)")
-    Page<Subasta> findVisibles(@Param("estados") List<EstadoSubasta> estados,
+    @Query("SELECT s FROM Subasta s WHERE " +
+           "(s.estado IN :estadosSinLimite) OR " +
+           "(s.estado IN :estadosConLimite AND s.fechaAdjudicacion > :limite)")
+    Page<Subasta> findVisibles(@Param("estadosSinLimite") List<EstadoSubasta> estadosSinLimite,
+                               @Param("estadosConLimite") List<EstadoSubasta> estadosConLimite,
                                @Param("limite") Instant limite,
                                Pageable pageable);
 
