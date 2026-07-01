@@ -120,14 +120,23 @@ export default function SubastaDetailPage() {
     `/api/subastas/${id}/stream`,
     {
       'nueva-puja': (data: unknown) => {
-        const puja = data as Bid & { fechaCierre?: string };
+        const puja = data as { monto: number; montoActual: number; fechaCierre?: string };
         setAuction(prev => {
           if (!prev) return prev;
+          const newBid: Bid = {
+            id: String(Date.now()),
+            auctionId: String(prev.id),
+            bidderId: null,
+            bidderName: 'Anónimo',
+            bidderAvatar: '',
+            amount: puja.monto,
+            time: new Date().toISOString(),
+          };
           return {
             ...prev,
-            currentPrice: puja.amount,
+            currentPrice: puja.montoActual,
             bidsCount: prev.bidsCount + 1,
-            bids: [puja, ...prev.bids],
+            bids: [newBid, ...prev.bids],
             ...(puja.fechaCierre ? { endTime: puja.fechaCierre } : {}),
           };
         });
