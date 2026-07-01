@@ -16,7 +16,7 @@ export function mapSubastaToAuction(subasta: SubastaBackend): Auction {
     createdAt: subasta.fechaInicio,
     seller: {
       name: subasta.vendedorNombre,
-      rating: 0,
+      rating: subasta.vendedorCalificacionPromedio ?? 0,
       avatar: '',
     } as Seller,
     bids: [],

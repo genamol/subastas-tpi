@@ -147,7 +147,9 @@ export default function CatalogoPage() {
                 <div className="p-4">
                   <div className="flex items-center justify-between text-[11px] text-text-muted mb-2">
                     <span>Vendedor: {auc.seller.name}</span>
-                    <span className="text-amber-500">{auc.seller.rating} ★</span>
+                    {auc.seller.rating > 0 && (
+                      <span className="text-amber-500">{auc.seller.rating.toFixed(1)} ★</span>
+                    )}
                   </div>
                   <h3 className="font-display font-bold text-base text-text-primary mb-2 line-clamp-1 group-hover:text-amber-400 transition-colors">{auc.title}</h3>
                   <p className="text-xs text-text-muted line-clamp-2 leading-relaxed mb-4">{auc.description}</p>
