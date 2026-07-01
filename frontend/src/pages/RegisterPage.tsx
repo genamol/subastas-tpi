@@ -56,7 +56,7 @@ export default function RegisterPage() {
             <Gavel className="h-5 w-5" />
           </div>
           <h1 className="mt-2 text-xl font-bold tracking-tight text-text-primary">
-            <span className="font-display">UniSubastas</span>
+            <span className="font-display font-bold tracking-widest">QUIEN DA MA<span className="text-amber-500">$</span></span>
           </h1>
         </div>
 

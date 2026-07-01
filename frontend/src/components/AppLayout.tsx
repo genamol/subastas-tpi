@@ -72,7 +72,7 @@ export default function AppLayout() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-main shadow-md shadow-amber-500/10">
               <Gavel className="h-5 w-5" />
             </div>
-            <span className="font-display text-lg font-bold tracking-tight text-text-primary">Uni<span className="text-amber-500">Subastas</span></span>
+            <span className="font-display text-lg font-bold tracking-widest text-text-primary">QUIEN DA MA<span className="text-amber-500">$</span></span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-1">
