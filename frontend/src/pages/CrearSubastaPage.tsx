@@ -63,9 +63,9 @@ export default function CrearSubastaPage() {
     try {
       let url = '';
       try {
-        url = await subirImagen(file);
-      } catch {
         url = await subirAImgbb(file);
+      } catch {
+        url = await subirImagen(file);
       }
       setNewImage(url);
     } catch {
