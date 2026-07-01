@@ -53,6 +53,7 @@ export default function CatalogoPage() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [selectedEstado, setSelectedEstado] = useState('Todos');
   const [bidError, setBidError] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<string[]>([]);
 
@@ -69,11 +70,20 @@ export default function CatalogoPage() {
   const filteredAuctions = auctions
     .filter(a => {
       const matchesCategory = selectedCategory === 'Todos' || a.category === selectedCategory;
+      const matchesEstado = selectedEstado === 'Todos' || a.estado === selectedEstado;
       const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             a.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesEstado && matchesSearch;
     })
-    .sort((a, b) => (estadoOrden[a.estado ?? ''] ?? 99) - (estadoOrden[b.estado ?? ''] ?? 99));
+    .sort((a, b) => {
+      const estadoDiff = (estadoOrden[a.estado ?? ''] ?? 99) - (estadoOrden[b.estado ?? ''] ?? 99);
+      if (estadoDiff !== 0) return estadoDiff;
+      const endA = new Date(a.endTime).getTime();
+      const endB = new Date(b.endTime).getTime();
+      if (a.estado === 'ACTIVA') return endA - endB; // menos tiempo restante primero
+      if (a.estado === 'ADJUDICADA' || a.estado === 'FINALIZADA') return endB - endA; // más reciente primero
+      return 0;
+    });
 
   const handleSelectAuction = (auction: Auction) => {
     navigate(`/subastas/${auction.id}`);
@@ -97,28 +107,46 @@ export default function CatalogoPage() {
       {bidError && (
         <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-400">{bidError}</div>
       )}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface p-4 rounded-2xl border border-border">
-        <div className="relative w-full md:w-80">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar artículos (ej. MacBook, Fender)..."
-            className="w-full rounded-xl border border-border bg-input py-2 px-4 text-xs text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-          />
+      <div className="flex flex-col gap-3 bg-surface p-4 rounded-2xl border border-border">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="relative w-full md:w-80">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar artículos (ej. MacBook, Fender)..."
+              className="w-full rounded-xl border border-border bg-input py-2 px-4 text-xs text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto overflow-x-auto max-w-full">
+            {categorias.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/10'
+                    : 'bg-input border border-border text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 self-start md:self-auto overflow-x-auto max-w-full">
-          {categorias.map(cat => (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-3">
+          <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold mr-1">Estado:</span>
+          {(['Todos', 'ACTIVA', 'PUBLICADA', 'ADJUDICADA', 'FINALIZADA'] as const).map(est => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              key={est}
+              onClick={() => setSelectedEstado(est)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                selectedCategory === cat
+                selectedEstado === est
                   ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/10'
                   : 'bg-input border border-border text-text-secondary hover:text-text-primary'
               }`}
             >
-              {cat}
+              {est === 'Todos' ? 'Todos' : est.charAt(0) + est.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
