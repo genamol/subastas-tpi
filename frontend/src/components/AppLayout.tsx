@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package, Boxes, User, ChevronDown } from 'lucide-react';
+import { Gavel, LayoutDashboard, Award, PlusCircle, Bell, Shield, LogOut, Package, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { useSse } from '../hooks/useSse';
@@ -55,7 +55,6 @@ export default function AppLayout() {
     { id: '/catalogo', label: 'Catálogo', icon: LayoutDashboard },
     { id: '/mis-pujas', label: 'Mis Pujas', icon: Award },
     { id: '/mis-subastas', label: 'Mis Publicaciones', icon: Package },
-    { id: '/mis-productos', label: 'Mis Productos', icon: Boxes },
     { id: '/crear', label: 'Publicar', icon: PlusCircle },
     ...(isAdmin() ? [{ id: '/admin', label: 'Admin', icon: Shield }] : []),
   ];
