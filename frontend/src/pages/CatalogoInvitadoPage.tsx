@@ -30,7 +30,7 @@ export default function CatalogoInvitadoPage() {
   return (
     <div className="min-h-screen bg-main">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-md px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-amber-500" /><span className="font-display font-bold text-text-primary">UniSubastas</span></div>
+        <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-amber-500" /><span className="font-display font-bold tracking-widest text-text-primary">QUIEN DA MA<span className="text-amber-500">$</span></span></div>
         <div className="flex items-center gap-3">
           <Link to="/login" className="text-xs text-amber-400 hover:text-amber-300 font-medium">Iniciar sesión</Link>
           <Link to="/register" className="rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400">Registrarse</Link>

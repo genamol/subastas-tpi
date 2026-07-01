@@ -68,8 +68,17 @@ export default function SubastaDetailPage() {
     `/api/subastas/${id}/stream`,
     {
       'nueva-puja': (data: unknown) => {
-        const puja = data as Bid;
-        setAuction(prev => prev ? { ...prev, currentPrice: puja.amount, bidsCount: prev.bidsCount + 1, bids: [puja, ...prev.bids] } : prev);
+        const puja = data as Bid & { fechaCierre?: string };
+        setAuction(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            currentPrice: puja.amount,
+            bidsCount: prev.bidsCount + 1,
+            bids: [puja, ...prev.bids],
+            ...(puja.fechaCierre ? { endTime: puja.fechaCierre } : {}),
+          };
+        });
       },
       'cambio-estado': (data: unknown) => {
         const estado = data as { estado: string };
@@ -203,7 +212,7 @@ export default function SubastaDetailPage() {
         <ChevronRight className="h-3.5 w-3.5 text-text-muted" />
         <span className="text-text-muted font-medium truncate max-w-[200px]">{auction.title}</span>
 
-        {isAuthenticated && auction.estado === 'BORRADOR' && (
+        {isAuthenticated && auction.estado === 'BORRADOR' && (userId === auction.vendedorId || isAdmin()) && (
             <div className="ml-auto flex gap-2">
               <button
                   onClick={() => navigate('/crear', { state: { editAuction: auction } })}
@@ -475,7 +484,7 @@ export default function SubastaDetailPage() {
         </div>
       )}
 
-      {(auction.status === 'finished' || auction.status === 'active') && (
+      {auction.estado === 'ADJUDICADA' && (
         <div className="bg-surface border border-border p-5 rounded-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

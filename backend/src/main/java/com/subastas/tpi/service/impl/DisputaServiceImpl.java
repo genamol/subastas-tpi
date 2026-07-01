@@ -87,7 +87,10 @@ public class DisputaServiceImpl implements DisputaService {
         disputaRepository.save(disputa);
 
         Subasta subasta = disputa.getSubasta();
-        EstadoSubasta estadoFinal = request.getEstadoFinal() != null ? request.getEstadoFinal() : EstadoSubasta.ADJUDICADA;
+        EstadoSubasta estadoFinal = request.getEstadoFinal();
+        if (estadoFinal != EstadoSubasta.ADJUDICADA && estadoFinal != EstadoSubasta.CANCELADA) {
+            throw new BusinessException("disputa.estado.final.invalido", HttpStatus.BAD_REQUEST);
+        }
         subasta.setEstado(estadoFinal);
         subastaRepository.save(subasta);
 

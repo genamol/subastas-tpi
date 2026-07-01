@@ -18,5 +18,6 @@ public class PujaSseDto {
     private BigDecimal monto;
     private BigDecimal montoActual;
     private Instant fechaPuja;
+    private Instant fechaCierre;
     // ofertante queda anónimo para usuarios normales; ADMIN ve todo vía otro canal
 }

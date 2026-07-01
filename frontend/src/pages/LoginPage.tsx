@@ -41,7 +41,7 @@ export default function LoginPage() {
             <Gavel className="h-7 w-7" />
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-text-primary">
-            <span className="font-display">UniSubastas</span>
+            <span className="font-display font-bold tracking-widest">QUIEN DA MA<span className="text-amber-500">$</span></span>
           </h1>
           <p className="mt-1 text-xs text-text-muted">Iniciá sesión para pujar</p>
         </div>

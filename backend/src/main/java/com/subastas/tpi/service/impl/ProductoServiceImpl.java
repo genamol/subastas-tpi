@@ -83,7 +83,11 @@ public class ProductoServiceImpl implements ProductoService {
         boolean esAdmin = usuario.getRoles().stream()
                 .anyMatch(rol -> rol.getNombre() == RolNombre.ADMIN);
 
-        // Si no es admin, aplicamos las restricciones del negocio
+        // Nadie puede editar un producto con subasta ACTIVA (protege a los pujadores)
+        if (subastaRepository.existsByProductoIdAndEstadoIn(id, List.of(EstadoSubasta.ACTIVA))) {
+            throw new BusinessException("producto.edicion.prohibida", HttpStatus.BAD_REQUEST);
+        }
+
         if (!esAdmin) {
             if (!producto.getVendedor().getId().equals(vendedorId)) {
                 throw new BusinessException("producto.no.autorizado", HttpStatus.FORBIDDEN);
@@ -91,7 +95,6 @@ public class ProductoServiceImpl implements ProductoService {
 
             List<EstadoSubasta> estadosRestringidos = List.of(
                     EstadoSubasta.PUBLICADA,
-                    EstadoSubasta.ACTIVA,
                     EstadoSubasta.FINALIZADA,
                     EstadoSubasta.ADJUDICADA,
                     EstadoSubasta.EN_DISPUTA
@@ -150,7 +153,12 @@ public class ProductoServiceImpl implements ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("producto.no.encontrado", HttpStatus.NOT_FOUND));
 
-        if (!producto.getVendedor().getId().equals(vendedorId)) {
+        Usuario usuario = usuarioRepository.findById(vendedorId)
+                .orElseThrow(() -> new BusinessException("usuario.no.encontrado", HttpStatus.NOT_FOUND));
+        boolean esAdmin = usuario.getRoles().stream()
+                .anyMatch(rol -> rol.getNombre() == RolNombre.ADMIN);
+
+        if (!esAdmin && !producto.getVendedor().getId().equals(vendedorId)) {
             throw new BusinessException("producto.no.autorizado", HttpStatus.FORBIDDEN);
         }
 
