@@ -30,6 +30,8 @@ public interface SubastaRepository extends JpaRepository<Subasta, Long> {
 
     List<Subasta> findByEstadoAndFechaCierreBefore(EstadoSubasta estado, Instant fecha);
 
+    List<Subasta> findByEstadoAndFechaAdjudicacionBefore(EstadoSubasta estado, Instant fecha);
+
     boolean existsByProductoIdAndEstadoIn(Long productoId, List<EstadoSubasta> estados);
 
     long countByVendedorId(Long vendedorId);

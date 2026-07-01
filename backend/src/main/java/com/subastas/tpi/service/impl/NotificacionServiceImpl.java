@@ -87,6 +87,25 @@ public class NotificacionServiceImpl implements NotificacionService {
         return notificacionRepository.save(notificacion);
     }
 
+    @Override
+    @Transactional
+    public Notificacion notificarVendedorPagoVencido(Long subastaId) {
+        Subasta subasta = subastaRepository.findById(subastaId)
+                .orElseThrow(() -> new BusinessException("subasta.no.encontrada", HttpStatus.NOT_FOUND));
+
+        String plantilla = messageSource.getMessage("notificacion.pago.vencido", null,
+                LocaleContextHolder.getLocale());
+        String mensaje = MessageFormat.format(plantilla, subasta.getProducto().getNombre());
+
+        Notificacion notificacion = new Notificacion();
+        notificacion.setMensaje(mensaje);
+        notificacion.setTipo(TipoNotificacion.PAGO_VENCIDO);
+        notificacion.setDestinatario(subasta.getVendedor());
+        notificacion.setSubasta(subasta);
+
+        return notificacionRepository.save(notificacion);
+    }
+
     private NotificacionResponse mapToResponse(Notificacion notificacion) {
         return NotificacionResponse.builder()
             .id(notificacion.getId())

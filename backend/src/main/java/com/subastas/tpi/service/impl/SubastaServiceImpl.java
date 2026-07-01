@@ -4,6 +4,8 @@ import com.subastas.tpi.dto.request.SubastaRequest;
 import com.subastas.tpi.dto.response.HistorialEstadoResponse;
 import com.subastas.tpi.dto.response.SubastaResponse;
 import com.subastas.tpi.event.EstadoCambiadoEvent;
+import com.subastas.tpi.event.PagoVencidoEvent;
+import com.subastas.tpi.model.enums.EstadoPago;
 import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.HistorialEstado;
 import com.subastas.tpi.model.ImagenProducto;
@@ -13,6 +15,7 @@ import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.model.enums.EstadoSubasta;
 import com.subastas.tpi.repository.CalificacionRepository;
 import com.subastas.tpi.repository.HistorialEstadoRepository;
+import com.subastas.tpi.repository.PagoRepository;
 import com.subastas.tpi.repository.ProductoRepository;
 import com.subastas.tpi.repository.SubastaRepository;
 import com.subastas.tpi.repository.UsuarioRepository;
@@ -41,6 +44,7 @@ public class SubastaServiceImpl implements SubastaService {
     private final UsuarioRepository usuarioRepository;
     private final HistorialEstadoRepository historialEstadoRepository;
     private final CalificacionRepository calificacionRepository;
+    private final PagoRepository pagoRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Value("${subasta.visibilidad-horas:12}")
@@ -210,6 +214,29 @@ public class SubastaServiceImpl implements SubastaService {
             registrarHistorialEstado(subasta, anterior, nuevoEstado, motivo, null);
             eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), nuevoEstado));
         }
+
+        // Subastas ADJUDICADA con pago vencido (48 horas sin aprobación)
+        Instant limite48h = ahora.minus(48, ChronoUnit.HOURS);
+        List<Subasta> pagoVencido = subastaRepository.findByEstadoAndFechaAdjudicacionBefore(EstadoSubasta.ADJUDICADA, limite48h);
+        for (Subasta subasta : pagoVencido) {
+            boolean pagoAprobado = pagoRepository.findBySubastaId(subasta.getId())
+                    .map(p -> p.getEstado() == EstadoPago.APROBADO)
+                    .orElse(false);
+            if (!pagoAprobado) {
+                // Eliminar pago rechazado si existía
+                pagoRepository.findBySubastaId(subasta.getId()).ifPresent(pagoRepository::delete);
+
+                EstadoSubasta anterior = subasta.getEstado();
+                subasta.setGanador(null);
+                subasta.setMontoActual(subasta.getPrecioBase());
+                subasta.setFechaAdjudicacion(null);
+                subasta.setEstado(EstadoSubasta.BORRADOR);
+                subastaRepository.save(subasta);
+                registrarHistorialEstado(subasta, anterior, EstadoSubasta.BORRADOR,
+                        "Pago no realizado en el plazo de 48 horas", null);
+                eventPublisher.publishEvent(new PagoVencidoEvent(subasta.getId()));
+            }
+        }
     }
 
     private void registrarHistorialEstado(Subasta subasta, EstadoSubasta anterior, EstadoSubasta nuevo,
@@ -268,6 +295,12 @@ public class SubastaServiceImpl implements SubastaService {
                 .vendedorCalificacionPromedio(calificacionRepository.findPromedioByCalificadoId(subasta.getVendedor().getId()))
                 .ganadorId(subasta.getGanador() != null ? subasta.getGanador().getId() : null)
                 .ganadorNombre(subasta.getGanador() != null ? subasta.getGanador().getNombre() : null)
+                .estadoPago(pagoRepository.findBySubastaId(subasta.getId())
+                        .map(p -> p.getEstado().name())
+                        .orElse(null))
+                .fechaLimitePago(subasta.getEstado() == EstadoSubasta.ADJUDICADA && subasta.getFechaAdjudicacion() != null
+                        ? subasta.getFechaAdjudicacion().plus(48, ChronoUnit.HOURS)
+                        : null)
                 .build();
     }
 }

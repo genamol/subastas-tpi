@@ -18,4 +18,6 @@ public interface NotificacionService {
     long contarNoLeidas(Long usuarioId);
 
     Notificacion notificarVendedorNuevaPuja(Long subastaId, BigDecimal monto);
+
+    Notificacion notificarVendedorPagoVencido(Long subastaId);
 }

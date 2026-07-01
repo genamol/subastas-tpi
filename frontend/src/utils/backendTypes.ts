@@ -18,6 +18,8 @@ export interface SubastaBackend {
   vendedorCalificacionPromedio: number | null;
   ganadorId: number | null;
   ganadorNombre: string | null;
+  estadoPago: string | null;
+  fechaLimitePago: string | null;
 }
 
 export interface PujaBackend {

@@ -26,6 +26,8 @@ export function mapSubastaToAuction(subasta: SubastaBackend): Auction {
     ganadorId: subasta.ganadorId,
     ganadorNombre: subasta.ganadorNombre,
     productoId: subasta.productoId,
+    estadoPago: subasta.estadoPago ?? null,
+    fechaLimitePago: subasta.fechaLimitePago ?? null,
   };
 }
 

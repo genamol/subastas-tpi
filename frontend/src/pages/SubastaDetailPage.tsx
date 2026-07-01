@@ -18,6 +18,58 @@ const formatDate = (isoString: string) => {
   return d.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 };
 
+function formatPagoCountdown(ms: number): string {
+  if (ms <= 0) return 'Plazo vencido';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m}min ${s}s`;
+  return `${s}s`;
+}
+
+function PagoCountdownBanner({ fechaLimitePago, onPagar }: { fechaLimitePago: string | null; onPagar: () => void }) {
+  const [remaining, setRemaining] = useState(() =>
+    fechaLimitePago ? new Date(fechaLimitePago).getTime() - Date.now() : null
+  );
+
+  useEffect(() => {
+    if (!fechaLimitePago) return;
+    const t = setInterval(() => {
+      setRemaining(new Date(fechaLimitePago).getTime() - Date.now());
+    }, 1000);
+    return () => clearInterval(t);
+  }, [fechaLimitePago]);
+
+  const urgent = remaining !== null && remaining < 3600000 && remaining > 0;
+  const expired = remaining !== null && remaining <= 0;
+
+  return (
+    <div className={`p-5 rounded-2xl border flex items-center justify-between gap-4 ${
+      expired ? 'border-rose-500/30 bg-rose-500/5' : urgent ? 'border-rose-500/20 bg-rose-500/5' : 'border-amber-500/20 bg-surface'
+    }`}>
+      <div>
+        <p className="font-bold text-sm text-text-primary">Pago pendiente</p>
+        {remaining !== null ? (
+          <p className={`text-xs mt-0.5 font-mono font-semibold ${expired ? 'text-rose-400' : urgent ? 'text-rose-400' : 'text-amber-400'}`}>
+            {expired ? 'El plazo venció — la subasta será revertida' : `Tiempo restante: ${formatPagoCountdown(remaining)}`}
+          </p>
+        ) : (
+          <p className="text-xs text-text-muted mt-0.5">Completá el pago para finalizar la transacción.</p>
+        )}
+      </div>
+      {!expired && (
+        <button
+          onClick={onPagar}
+          className="flex-shrink-0 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold px-5 py-2.5 text-sm transition-colors"
+        >
+          Realizar pago
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function SubastaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -364,6 +416,14 @@ export default function SubastaDetailPage() {
             <span className="font-mono font-extrabold text-amber-400">${auction.currentPrice.toLocaleString('es-ES')}</span>
           </div>
         </div>
+      )}
+
+      {/* Pago */}
+      {auction.estado === 'ADJUDICADA' && userId === auction.ganadorId && auction.estadoPago !== 'APROBADO' && (
+        <PagoCountdownBanner
+          fechaLimitePago={auction.fechaLimitePago}
+          onPagar={() => navigate(`/subastas/${auction.id}/pagar`)}
+        />
       )}
 
       {/* Calificaciones */}
