@@ -473,7 +473,7 @@ export default function SubastaDetailPage() {
                   </div>
                   {(h.motivo || h.usuarioResponsableNombre) && (
                     <p className="text-[10px] text-text-muted mt-0.5 leading-relaxed">
-                      {h.usuarioResponsableNombre && <span className="font-medium">{h.usuarioResponsableNombre}</span>}
+                      {h.usuarioResponsableNombre && <span className="font-medium">{censorName(h.usuarioResponsableNombre)}</span>}
                       {h.motivo && <span>{h.usuarioResponsableNombre ? ' — ' : ''}{h.motivo}</span>}
                     </p>
                   )}

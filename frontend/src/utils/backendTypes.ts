@@ -15,6 +15,7 @@ export interface SubastaBackend {
   totalPujas: number;
   vendedorId: number;
   vendedorNombre: string;
+  vendedorCalificacionPromedio: number | null;
   ganadorId: number | null;
   ganadorNombre: string | null;
 }

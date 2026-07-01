@@ -11,6 +11,7 @@ import com.subastas.tpi.model.Producto;
 import com.subastas.tpi.model.Subasta;
 import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.model.enums.EstadoSubasta;
+import com.subastas.tpi.repository.CalificacionRepository;
 import com.subastas.tpi.repository.HistorialEstadoRepository;
 import com.subastas.tpi.repository.ProductoRepository;
 import com.subastas.tpi.repository.SubastaRepository;
@@ -39,6 +40,7 @@ public class SubastaServiceImpl implements SubastaService {
     private final ProductoRepository productoRepository;
     private final UsuarioRepository usuarioRepository;
     private final HistorialEstadoRepository historialEstadoRepository;
+    private final CalificacionRepository calificacionRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Value("${subasta.visibilidad-horas:12}")
@@ -263,6 +265,7 @@ public class SubastaServiceImpl implements SubastaService {
                 .totalPujas(totalPujas)
                 .vendedorId(subasta.getVendedor().getId())
                 .vendedorNombre(subasta.getVendedor().getNombre())
+                .vendedorCalificacionPromedio(calificacionRepository.findPromedioByCalificadoId(subasta.getVendedor().getId()))
                 .ganadorId(subasta.getGanador() != null ? subasta.getGanador().getId() : null)
                 .ganadorNombre(subasta.getGanador() != null ? subasta.getGanador().getNombre() : null)
                 .build();
