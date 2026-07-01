@@ -1,43 +1,48 @@
 # QUIEN DA MA$
 
-Plataforma de subastas online en tiempo real desarrollada como Trabajo Práctico Integrador para la materia **Programación IV** — UTN FRVM.
+Plataforma de subastas online en tiempo real — Trabajo Práctico Integrador de **Programación IV**, UTN FRVM 2026.
 
-[![Backend](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Frontend](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Deploy](https://img.shields.io/badge/Deploy-Railway-0B0D0E?logo=railway)](https://railway.app)
 
 ---
 
-## Acceso
+## Demo en vivo
 
-| | |
-|---|---|
-| **Aplicación web** | https://quiendamas.up.railway.app |
-| **API REST** | https://worthy-respect-production-4be9.up.railway.app |
-| **Documentación API** | https://worthy-respect-production-4be9.up.railway.app/swagger-ui.html |
+- **Aplicación web:** https://quiendamas.up.railway.app
+- **API REST:** https://worthy-respect-production-4be9.up.railway.app
+- **Documentación (Swagger):** https://worthy-respect-production-4be9.up.railway.app/swagger-ui.html
 
 ---
 
-## Stack
+## Stack tecnológico
 
-**Backend** — Java 17 · Spring Boot 3 · Spring Security 6 · Spring Data JPA · PostgreSQL · Lombok · Springdoc OpenAPI
-
-**Frontend** — React 19 · TypeScript · Vite · Tailwind CSS 4 · Axios · React Router DOM
+| Capa | Tecnologías |
+|---|---|
+| **Backend** | Java 17 · Spring Boot 3 · Spring Security 6 · Spring Data JPA · PostgreSQL |
+| **Seguridad** | JWT (doble token) · BCrypt · Rate Limiting · CORS |
+| **Tiempo real** | SSE (Server-Sent Events) · Spring Application Events (Observer) |
+| **Frontend** | React 19 · TypeScript · Vite · Tailwind CSS 4 · Axios · React Router DOM |
+| **Deploy** | Railway (backend + frontend + PostgreSQL) |
 
 ---
 
 ## Funcionalidades
 
-- Autenticación con doble token JWT (Access Token 15 min + Refresh Token 7 días en cookie `HttpOnly`)
-- Rate limiting por ventana deslizante sobre endpoints críticos
+- Registro e inicio de sesión con roles (`USER`, `SELLER`, `ADMIN`)
+- Autenticación con doble token JWT — Access Token (15 min) + Refresh Token (7 días) en cookie `HttpOnly`
+- Rate limiting con ventana deslizante sobre endpoints críticos
 - Pujas en tiempo real mediante SSE con sistema de tickets efímeros
 - Identidades censuradas durante subastas activas (privacidad de oferentes)
-- Cierre automático programado (scheduler cada 30 segundos)
-- Soft-close: pujas en el último minuto extienden el cierre 60 segundos
+- Cierre automático programado cada 30 segundos (scheduler)
+- **Soft-close:** una puja en el último minuto extiende el cierre 60 segundos
 - Control de concurrencia con bloqueo pesimista (`SELECT FOR UPDATE`)
 - Historial completo de cambios de estado por subasta
 - Sistema de disputas con resolución por administrador
-- Notificaciones en tiempo real por usuario
+- Notificaciones push en tiempo real por usuario
 - Calificaciones entre participantes tras adjudicación
 - Panel de administración con vista global en tiempo real
 
@@ -47,51 +52,54 @@ Plataforma de subastas online en tiempo real desarrollada como Trabajo Práctico
 
 ```
 /
-├── backend/                        # API Spring Boot
-│   └── src/main/java/.../
-│       ├── controller/             # Endpoints REST
-│       ├── service/impl/           # Lógica de negocio
-│       ├── repository/             # Acceso a datos (JPA)
-│       ├── model/ · dto/           # Entidades y DTOs
-│       ├── event/                  # Patrón Observer (ApplicationEvents)
-│       ├── security/               # JWT, rate limiting, tickets SSE
-│       ├── scheduler/              # Cierre automático de subastas
-│       └── exception/              # Manejo global de errores
-└── frontend/                       # SPA React + TypeScript
+├── backend/
+│   └── src/main/java/com/subastas/tpi/
+│       ├── controller/        # Endpoints REST
+│       ├── service/impl/      # Lógica de negocio
+│       ├── repository/        # Acceso a datos (JPA)
+│       ├── model/ · dto/      # Entidades JPA y DTOs
+│       ├── event/             # Patrón Observer (ApplicationEvents)
+│       ├── security/          # JWT · rate limiting · tickets SSE
+│       ├── scheduler/         # Cierre automático de subastas
+│       └── exception/         # Manejo global de errores
+└── frontend/
     └── src/
-        ├── pages/                  # Vistas principales
-        ├── components/             # Componentes reutilizables
-        ├── hooks/                  # useSse, useAuth, useSubastas
-        ├── services/               # Clientes HTTP (Axios) y SSE
-        ├── context/                # AuthContext, NotificacionesContext
-        └── utils/                  # Mappers, privacidad, avatares
+        ├── pages/             # Vistas principales
+        ├── components/        # Componentes reutilizables
+        ├── hooks/             # useSse · useAuth · useSubastas
+        ├── services/          # Clientes Axios y SSE
+        ├── context/           # AuthContext · NotificacionesContext
+        └── utils/             # Mappers · privacidad · avatares
 ```
 
 ---
 
 ## Correr localmente
 
-### Requisitos
+### Requisitos previos
 
 - Java 17+
 - Node.js 20+
 - PostgreSQL 15+
 
-### Backend
+### 1. Base de datos
+
+```bash
+psql -U postgres -c "CREATE DATABASE subastas_db;"
+```
+
+### 2. Backend
+
+Configurar las variables de entorno (ver sección [Variables de entorno](#variables-de-entorno)), luego:
 
 ```bash
 cd backend
-```
-
-Crear un archivo `.env` o configurar las variables de entorno (ver sección siguiente), luego:
-
-```bash
 ./mvnw spring-boot:run
 ```
 
-La API queda disponible en `http://localhost:8080`.
+API disponible en `http://localhost:8080`.
 
-### Frontend
+### 3. Frontend
 
 ```bash
 cd frontend
@@ -99,7 +107,7 @@ npm install
 npm run dev
 ```
 
-La app queda disponible en `http://localhost:5173`.
+App disponible en `http://localhost:5173`.
 
 ---
 
@@ -109,11 +117,11 @@ La app queda disponible en `http://localhost:5173`.
 
 | Variable | Descripción |
 |---|---|
-| `DB_URL` | URL JDBC de PostgreSQL |
+| `DB_URL` | URL JDBC de la base de datos PostgreSQL |
 | `DB_USERNAME` | Usuario de la base de datos |
 | `DB_PASSWORD` | Contraseña de la base de datos |
-| `JWT_SECRET` | Clave secreta para firma de tokens (mín. 32 caracteres) |
-| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos separados por coma |
+| `JWT_SECRET` | Clave secreta para firma de tokens JWT (mín. 32 caracteres) |
+| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos, separados por coma |
 | `SPRING_PROFILES_ACTIVE` | Perfil activo (`prod` en producción) |
 
 ### Frontend
@@ -131,7 +139,7 @@ cd backend
 ./mvnw test
 ```
 
-| Clase | Módulo |
+| Clase de prueba | Módulo cubierto |
 |---|---|
 | `CategoriaServiceImplTest` | Servicio de categorías |
 | `ProductoServiceImplTest` | Servicio de productos |
@@ -143,9 +151,9 @@ cd backend
 
 | Integrante | Contribuciones principales |
 |---|---|
-| **Genaro Molina** | Setup del proyecto, entidades JPA, repositorios, enums, seguridad, SSE, pujas, frontend |
-| **Paulo Zito** | DTOs de Categoria, Producto y Subasta; servicios de Categoria; pruebas unitarias |
-| **Maxi Zampa** | Historial de subastas, disputas, calificaciones, scheduler, revisión general |
+| **Genaro Molina** | Setup del proyecto · entidades JPA · repositorios · enums · excepciones · `DataInitializer` · configuración de deploy |
+| **Paulo Zito** | DTOs de Categoría, Producto y Subasta · servicios de Categoría · pruebas unitarias |
+| **Maxi Zampa** | Seguridad y autenticación · tiempo real SSE · pujas · historial de subastas · cableado del frontend |
 
 ---
 
