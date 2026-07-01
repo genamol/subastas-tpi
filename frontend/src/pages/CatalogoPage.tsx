@@ -10,39 +10,77 @@ import type { Auction } from '../types';
 
 interface Categoria { id: number; nombre: string; }
 
-function formatCountdown(endTime: string): { text: string; urgent: boolean; ended: boolean } {
-  const diff = new Date(endTime).getTime() - Date.now();
-  if (diff <= 0) return { text: 'Finalizada', urgent: false, ended: true };
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  if (days > 0) return { text: `${days}d ${hours}hs`, urgent: false, ended: false };
-  if (hours > 0) return { text: `${hours}hs ${mins}min`, urgent: diff < 86400000, ended: false };
-  return { text: `${mins}min`, urgent: true, ended: false };
+function formatDiff(ms: number): string {
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  const mins = Math.floor((ms % 3600000) / 60000);
+  if (days > 0) return `${days}d ${hours}hs`;
+  if (hours > 0) return `${hours}hs ${mins}min`;
+  return `${mins}min`;
 }
 
-function CardCountdown({ endTime }: { endTime: string }) {
-  const [info, setInfo] = useState(() => formatCountdown(endTime));
-  useEffect(() => {
-    const interval = setInterval(() => setInfo(formatCountdown(endTime)), 1000);
-    return () => clearInterval(interval);
-  }, [endTime]);
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
-  if (info.ended) {
+function CardTimeBadge({ estado, startTime, endTime }: { estado: string; startTime: string | null; endTime: string }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (estado === 'PUBLICADA') {
+    if (!startTime) {
+      return (
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-sky-950/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-sky-300 border border-sky-500/30">
+          <Clock className="h-3.5 w-3.5" />Sin fecha de inicio
+        </div>
+      );
+    }
+    const diffStart = new Date(startTime).getTime() - now;
     return (
-      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
-        <Clock className="h-3.5 w-3.5" />Finalizada
+      <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-sky-950/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-sky-300 border border-sky-500/30">
+        <Clock className="h-3.5 w-3.5" />
+        {diffStart > 0 ? `Inicia en ${formatDiff(diffStart)}` : `Inicia: ${formatDate(startTime)}`}
       </div>
     );
   }
+
+  if (estado === 'ACTIVA') {
+    const diffEnd = new Date(endTime).getTime() - now;
+    if (diffEnd <= 0) {
+      return (
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
+          <Clock className="h-3.5 w-3.5" />Cerrando...
+        </div>
+      );
+    }
+    const urgent = diffEnd < 3600000;
+    return (
+      <div className={`absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg backdrop-blur px-2.5 py-1 text-[11px] font-semibold border ${
+        urgent ? 'bg-rose-950/90 text-rose-300 border-rose-500/30 animate-pulse' : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/20'
+      }`}>
+        <Clock className={`h-3.5 w-3.5 ${urgent ? 'text-rose-400' : 'text-emerald-400'}`} />{formatDiff(diffEnd)}
+      </div>
+    );
+  }
+
+  const labelMap: Record<string, string> = { ADJUDICADA: 'Adjudicada', FINALIZADA: 'Finalizada', CANCELADA: 'Cancelada' };
   return (
-    <div className={`absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg backdrop-blur px-2.5 py-1 text-[11px] font-semibold border ${
-      info.urgent ? 'bg-rose-950/90 text-rose-300 border-rose-500/30 animate-pulse' : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/20'
-    }`}>
-      <Clock className={`h-3.5 w-3.5 ${info.urgent ? 'text-rose-400' : 'text-emerald-400'}`} />{info.text}
+    <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
+      <Clock className="h-3.5 w-3.5" />{labelMap[estado] ?? estado}
     </div>
   );
 }
+
+const ESTADO_BADGE: Record<string, string> = {
+  ACTIVA: 'text-amber-500',
+  PUBLICADA: 'text-sky-400',
+  ADJUDICADA: 'text-emerald-400',
+  FINALIZADA: 'text-slate-400',
+  CANCELADA: 'text-rose-400',
+};
 
 export default function CatalogoPage() {
   const { auctions, loading, error, pujar, recargar } = useSubastas();
@@ -166,15 +204,15 @@ export default function CatalogoPage() {
             <div key={auc.id} className="cursor-pointer" onClick={() => handleSelectAuction(auc)}>
               <div className="relative group rounded-2xl border border-border bg-surface overflow-hidden hover:border-border/80 transition-all duration-300">
                 <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-primary backdrop-blur">
-                  <span className="text-amber-500 font-bold uppercase mr-1">
-                    {new Date(auc.endTime).getTime() > Date.now() ? 'ACTIVA' : 'FINALIZADA'}
+                  <span className={`font-bold uppercase mr-1 ${ESTADO_BADGE[auc.estado] ?? 'text-text-muted'}`}>
+                    {auc.estado}
                   </span>
                   {auc.category}
                 </div>
                 <div className="aspect-video w-full overflow-hidden bg-input/60 relative">
                   {auc.image ? <img src={auc.image} alt={auc.title} className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500 opacity-80 group-hover:opacity-100" /> : <div className="h-full w-full bg-input" />}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-transparent to-transparent" />
-                  <CardCountdown endTime={auc.endTime} />
+                  <CardTimeBadge estado={auc.estado} startTime={auc.createdAt} endTime={auc.endTime} />
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between text-[11px] text-text-muted mb-2">
