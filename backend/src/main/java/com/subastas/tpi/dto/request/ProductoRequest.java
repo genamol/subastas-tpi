@@ -16,14 +16,14 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductoRequest {
 
-    @NotBlank(message = "El nombre del producto no puede estar vacío")
+    @NotBlank(message = "{producto.nombre.requerido}")
     private String nombre;
 
     private String descripcion;
 
-    @NotNull(message = "La categoría del producto es obligatoria")
+    @NotNull(message = "{producto.categoria.requerida}")
     private Long categoriaId;
 
-    @Size(max = 5, message = "Máximo 5 imágenes por producto")
+    @Size(max = 5, message = "{producto.imagenes.maximo}")
     private List<String> imagenes;
 }

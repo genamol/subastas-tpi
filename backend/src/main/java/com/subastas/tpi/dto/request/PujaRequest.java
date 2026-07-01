@@ -15,10 +15,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class PujaRequest {
 
-    @NotNull(message = "El id de la subasta es obligatorio")
+    @NotNull(message = "{puja.subastaId.requerido}")
     private Long subastaId;
 
-    @NotNull(message = "El monto de la puja es obligatorio")
-    @DecimalMin(value = "0.01", message = "El monto debe ser mayor a 0")
+    @NotNull(message = "{puja.monto.requerido}")
+    @DecimalMin(value = "0.01", message = "{puja.monto.minimo}")
     private BigDecimal monto;
 }

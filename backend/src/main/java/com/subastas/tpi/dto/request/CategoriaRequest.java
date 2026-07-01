@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CategoriaRequest {
 
-    @NotBlank(message = "El nombre de la categoría no puede estar vacío")
-    @Size(max = 100, message = "El nombre de la categoría no puede superar los 100 caracteres")
+    @NotBlank(message = "{categoria.nombre.requerido}")
+    @Size(max = 100, message = "{categoria.nombre.size}")
     private String nombre;
 
     private String descripcion;
