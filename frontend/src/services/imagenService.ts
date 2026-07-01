@@ -1,4 +1,5 @@
 import api from './api';
+import { API_URL } from '../config';
 
 export async function subirImagen(file: File): Promise<string> {
   const form = new FormData();
@@ -6,5 +7,9 @@ export async function subirImagen(file: File): Promise<string> {
   const { data } = await api.post('/api/imagenes/upload', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return data.url;
+  const url: string = data.url;
+  if (url.startsWith('/uploads/')) {
+    return API_URL + url;
+  }
+  return url;
 }
