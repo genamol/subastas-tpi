@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, Gavel } from 'lucide-react';
+import { censorName } from '../utils/privacidad';
 import { useNavigate } from 'react-router-dom';
 import { useSubastas } from '../hooks/useSubastas';
 import { useSse } from '../hooks/useSse';
@@ -24,7 +25,7 @@ function formatDate(iso: string): string {
 }
 
 function CardTimeBadge({ estado, startTime, endTime }: { estado: string; startTime: string | null; endTime: string }) {
-  const [now, setNow] = useState(Date.now);
+  const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -213,7 +214,7 @@ export default function CatalogoPage() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between text-[11px] text-text-muted mb-2">
-                    <span>Vendedor: {auc.seller.name}</span>
+                    <span>Vendedor: {censorName(auc.seller.name)}</span>
                     {auc.seller.rating > 0 && (
                       <span className="text-amber-500">{auc.seller.rating.toFixed(1)} ★</span>
                     )}

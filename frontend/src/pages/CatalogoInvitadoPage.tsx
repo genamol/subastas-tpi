@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Eye } from 'lucide-react';
+
+const ESTADO_BADGE: Record<string, string> = {
+  ACTIVA: 'text-amber-500',
+  PUBLICADA: 'text-sky-400',
+  ADJUDICADA: 'text-emerald-400',
+  FINALIZADA: 'text-slate-400',
+  CANCELADA: 'text-rose-400',
+};
 import * as subastaService from '../services/subastaService';
 import type { Auction } from '../types';
 
@@ -47,10 +55,14 @@ export default function CatalogoInvitadoPage() {
           {auctions.map(auc => (
             <div key={auc.id} className="rounded-2xl border border-border bg-surface overflow-hidden">
               <div className="relative aspect-video overflow-hidden bg-input/60">
-                <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-primary backdrop-blur">
-                  <span className="text-amber-500 font-bold uppercase mr-1">{new Date(auc.endTime).getTime() > Date.now() ? 'ACTIVA' : 'FINALIZADA'}</span>
-                  {auc.category}
+                <div className={`absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase backdrop-blur ${ESTADO_BADGE[auc.estado] ?? 'text-text-muted'}`}>
+                  {auc.estado}
                 </div>
+                {auc.category && (
+                  <div className="absolute top-3 right-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-muted backdrop-blur">
+                    {auc.category}
+                  </div>
+                )}
                 {auc.image ? <img src={auc.image} alt={auc.title} className="h-full w-full object-cover opacity-80" /> : <div className="h-full w-full bg-input" />}
                 <CardCountdown endTime={auc.endTime} />
               </div>
