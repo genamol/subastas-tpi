@@ -66,12 +66,7 @@ function CardTimeBadge({ estado, startTime, endTime }: { estado: string; startTi
     );
   }
 
-  const labelMap: Record<string, string> = { ADJUDICADA: 'Adjudicada', FINALIZADA: 'Finalizada', CANCELADA: 'Cancelada' };
-  return (
-    <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-input/90 backdrop-blur px-2.5 py-1 text-[11px] font-semibold text-text-muted border border-border/50">
-      <Clock className="h-3.5 w-3.5" />{labelMap[estado] ?? estado}
-    </div>
-  );
+  return null;
 }
 
 const ESTADO_BADGE: Record<string, string> = {
@@ -203,12 +198,14 @@ export default function CatalogoPage() {
           {filteredAuctions.map(auc => (
             <div key={auc.id} className="cursor-pointer" onClick={() => handleSelectAuction(auc)}>
               <div className="relative group rounded-2xl border border-border bg-surface overflow-hidden hover:border-border/80 transition-all duration-300">
-                <div className="absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-primary backdrop-blur">
-                  <span className={`font-bold uppercase mr-1 ${ESTADO_BADGE[auc.estado] ?? 'text-text-muted'}`}>
-                    {auc.estado}
-                  </span>
-                  {auc.category}
+                <div className={`absolute top-3 left-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase backdrop-blur ${ESTADO_BADGE[auc.estado] ?? 'text-text-muted'}`}>
+                  {auc.estado}
                 </div>
+                {auc.category && (
+                  <div className="absolute top-3 right-3 z-10 rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-text-muted backdrop-blur">
+                    {auc.category}
+                  </div>
+                )}
                 <div className="aspect-video w-full overflow-hidden bg-input/60 relative">
                   {auc.image ? <img src={auc.image} alt={auc.title} className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500 opacity-80 group-hover:opacity-100" /> : <div className="h-full w-full bg-input" />}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-transparent to-transparent" />
