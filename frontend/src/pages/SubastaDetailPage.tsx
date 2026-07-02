@@ -266,6 +266,8 @@ export default function SubastaDetailPage() {
   if (loading) return <DetailSkeleton />;
   if (!auction) return <div className="py-20 text-center text-text-muted text-sm">Subasta no encontrada</div>;
 
+  const canBid = auction.estado === 'ACTIVA' && isAuthenticated && userId !== auction.vendedorId;
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center space-x-2 text-xs">
@@ -300,7 +302,11 @@ export default function SubastaDetailPage() {
             {auction.image ? <img src={auction.image} alt={auction.title} className="w-full aspect-video object-cover opacity-90" /> : <div className="w-full aspect-video bg-input" />}
             <div className="absolute top-4 left-4 flex items-center space-x-1.5 rounded-full bg-main/85 backdrop-blur-md border border-border px-3 py-1 text-xs font-semibold text-text-primary">
               <Clock className="h-3.5 w-3.5 text-text-secondary" />
-              <span>Finaliza: {formatDate(auction.endTime)}</span>
+              <span>
+                {auction.estado === 'PUBLICADA'
+                  ? `Inicia: ${formatDate(auction.createdAt ?? auction.endTime)}`
+                  : `Finaliza: ${formatDate(auction.endTime)}`}
+              </span>
             </div>
             {showCountdown && (
               <div className={`absolute top-4 right-4 flex items-center space-x-2 rounded-full border px-3 py-1.5 text-sm font-bold text-white ${
@@ -345,21 +351,35 @@ export default function SubastaDetailPage() {
                 <span>Incremento mínimo:</span>
                 <strong className="text-text-primary font-mono">+${auction.minIncrement}</strong>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Puja rápida:</span>
-                <button onClick={handleQuickBid} className="rounded-lg bg-amber-500 text-black px-3 py-1 text-[11px] font-bold hover:bg-amber-400">¡Oferta! +${auction.minIncrement}</button>
-              </div>
+              {canBid && (
+                <div className="flex items-center justify-between">
+                  <span>Puja rápida:</span>
+                  <button onClick={handleQuickBid} className="rounded-lg bg-amber-500 text-black px-3 py-1 text-[11px] font-bold hover:bg-amber-400">¡Oferta! +${auction.minIncrement}</button>
+                </div>
+              )}
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); handleBid(); }} className="space-y-3">
-              <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tu oferta es de... (ARS):</label>
-              <div className="relative">
-                <input type="number" required value={bidAmount} onChange={(e) => setBidAmount(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-input p-3 pr-16 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none font-mono"
-                  placeholder={`${auction.currentPrice + auction.minIncrement}`} min={auction.currentPrice + auction.minIncrement} />
-                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-black hover:bg-amber-400">Pujar</button>
-              </div>
-              {bidError && <span className="block mt-1 text-[11px] font-semibold text-rose-400">{bidError}</span>}
-            </form>
+            {canBid ? (
+              <form onSubmit={(e) => { e.preventDefault(); handleBid(); }} className="space-y-3">
+                <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tu oferta es de... (ARS):</label>
+                <div className="relative">
+                  <input type="number" required value={bidAmount} onChange={(e) => setBidAmount(e.target.value)}
+                    className="w-full rounded-xl border border-border bg-input p-3 pr-16 text-text-primary placeholder-slate-600 focus:border-amber-500 focus:outline-none font-mono"
+                    placeholder={`${auction.currentPrice + auction.minIncrement}`} min={auction.currentPrice + auction.minIncrement} />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-black hover:bg-amber-400">Pujar</button>
+                </div>
+                {bidError && <span className="block mt-1 text-[11px] font-semibold text-rose-400">{bidError}</span>}
+              </form>
+            ) : (
+              <p className="text-center text-xs text-text-muted py-2">
+                {auction.estado === 'PUBLICADA'
+                  ? 'La subasta aún no ha comenzado'
+                  : auction.estado === 'ACTIVA' && userId === auction.vendedorId
+                  ? 'No podés pujar en tu propia subasta'
+                  : auction.estado === 'ACTIVA' && !isAuthenticated
+                  ? 'Iniciá sesión para pujar'
+                  : 'La subasta no se encuentra en estado ACTIVA para recibir ofertas'}
+              </p>
+            )}
           </div>
 
           <div className="bg-surface border border-border p-5 rounded-2xl">
