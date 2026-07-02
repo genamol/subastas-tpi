@@ -97,7 +97,8 @@ export default function CrearSubastaPage() {
         }, 2000);
       } else {
 
-        const inicioDate = iniciarAhora ? new Date(Date.now() + 5000) : new Date(fechaInicio);
+        // 45s buffer: da margen suficiente para latencia a Railway y validación @Future del backend
+      const inicioDate = iniciarAhora ? new Date(Date.now() + 45 * 1000) : new Date(fechaInicio);
         const cierreDate = new Date(fechaCierre);
 
         if (cierreDate <= inicioDate) {

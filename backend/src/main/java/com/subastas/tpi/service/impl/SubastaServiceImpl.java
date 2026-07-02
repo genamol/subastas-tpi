@@ -10,6 +10,7 @@ import com.subastas.tpi.exception.BusinessException;
 import com.subastas.tpi.model.HistorialEstado;
 import com.subastas.tpi.model.ImagenProducto;
 import com.subastas.tpi.model.Producto;
+import com.subastas.tpi.model.Puja;
 import com.subastas.tpi.model.Subasta;
 import com.subastas.tpi.model.Usuario;
 import com.subastas.tpi.model.enums.EstadoSubasta;
@@ -29,11 +30,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 // usamos supress por los warnings de lombok si no hay que hacer el constructor manual
+@Slf4j
 @SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
@@ -191,50 +195,70 @@ public class SubastaServiceImpl implements SubastaService {
 
         List<Subasta> aActivar = subastaRepository.findByEstadoAndFechaInicioBefore(EstadoSubasta.PUBLICADA, ahora);
         for (Subasta subasta : aActivar) {
-            EstadoSubasta anterior = subasta.getEstado();
-            subasta.setEstado(EstadoSubasta.ACTIVA);
-            subastaRepository.save(subasta);
-            registrarHistorialEstado(subasta, anterior, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
-            eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), EstadoSubasta.ACTIVA));
+            try {
+                EstadoSubasta anterior = subasta.getEstado();
+                subasta.setEstado(EstadoSubasta.ACTIVA);
+                subastaRepository.save(subasta);
+                registrarHistorialEstado(subasta, anterior, EstadoSubasta.ACTIVA, "Inicio automático por fecha alcanzada", null);
+                eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), EstadoSubasta.ACTIVA));
+                log.info("Subasta {} activada automáticamente", subasta.getId());
+            } catch (Exception e) {
+                log.error("Error al activar subasta {}: {}", subasta.getId(), e.getMessage(), e);
+            }
         }
 
         List<Subasta> aCerrar = subastaRepository.findByEstadoAndFechaCierreBefore(EstadoSubasta.ACTIVA, ahora);
         for (Subasta subasta : aCerrar) {
-            boolean tienePujas = subasta.getPujas() != null && !subasta.getPujas().isEmpty();
-            EstadoSubasta anterior = subasta.getEstado();
-            EstadoSubasta nuevoEstado = tienePujas ? EstadoSubasta.ADJUDICADA : EstadoSubasta.FINALIZADA;
+            try {
+                boolean tienePujas = subasta.getPujas() != null && !subasta.getPujas().isEmpty();
+                EstadoSubasta anterior = subasta.getEstado();
+                EstadoSubasta nuevoEstado = tienePujas ? EstadoSubasta.ADJUDICADA : EstadoSubasta.FINALIZADA;
 
-            subasta.setEstado(nuevoEstado);
-            if (tienePujas) {
-                subasta.setFechaAdjudicacion(ahora);
+                subasta.setEstado(nuevoEstado);
+                if (tienePujas) {
+                    subasta.setFechaAdjudicacion(ahora);
+                    Puja pujaMayor = subasta.getPujas().stream()
+                            .max(java.util.Comparator.comparing(Puja::getMonto))
+                            .orElse(null);
+                    if (pujaMayor != null) {
+                        subasta.setGanador(pujaMayor.getOfertante());
+                    }
+                }
+                subastaRepository.save(subasta);
+
+                String motivo = tienePujas ? "Adjudicada automáticamente al vencer el tiempo" : "Finalizada automáticamente sin ofertas";
+                registrarHistorialEstado(subasta, anterior, nuevoEstado, motivo, null);
+                eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), nuevoEstado));
+                log.info("Subasta {} cerrada automáticamente como {}", subasta.getId(), nuevoEstado);
+            } catch (Exception e) {
+                log.error("Error al cerrar subasta {}: {}", subasta.getId(), e.getMessage(), e);
             }
-            subastaRepository.save(subasta);
-
-            String motivo = tienePujas ? "Adjudicada automáticamente al vencer el tiempo" : "Finalizada automáticamente sin ofertas";
-            registrarHistorialEstado(subasta, anterior, nuevoEstado, motivo, null);
-            eventPublisher.publishEvent(new EstadoCambiadoEvent(subasta.getId(), nuevoEstado));
         }
 
         // Subastas ADJUDICADA con pago vencido (48 horas sin aprobación)
         Instant limite48h = ahora.minus(48, ChronoUnit.HOURS);
         List<Subasta> pagoVencido = subastaRepository.findByEstadoAndFechaAdjudicacionBefore(EstadoSubasta.ADJUDICADA, limite48h);
         for (Subasta subasta : pagoVencido) {
-            boolean pagoAprobado = pagoRepository.findBySubastaId(subasta.getId())
-                    .map(p -> p.getEstado() == EstadoPago.APROBADO)
-                    .orElse(false);
-            if (!pagoAprobado) {
-                // Eliminar pago rechazado si existía
-                pagoRepository.findBySubastaId(subasta.getId()).ifPresent(pagoRepository::delete);
+            try {
+                boolean pagoAprobado = pagoRepository.findBySubastaId(subasta.getId())
+                        .map(p -> p.getEstado() == EstadoPago.APROBADO)
+                        .orElse(false);
+                if (!pagoAprobado) {
+                    pagoRepository.findBySubastaId(subasta.getId()).ifPresent(pagoRepository::delete);
 
-                EstadoSubasta anterior = subasta.getEstado();
-                subasta.setGanador(null);
-                subasta.setMontoActual(subasta.getPrecioBase());
-                subasta.setFechaAdjudicacion(null);
-                subasta.setEstado(EstadoSubasta.BORRADOR);
-                subastaRepository.save(subasta);
-                registrarHistorialEstado(subasta, anterior, EstadoSubasta.BORRADOR,
-                        "Pago no realizado en el plazo de 48 horas", null);
-                eventPublisher.publishEvent(new PagoVencidoEvent(subasta.getId()));
+                    EstadoSubasta anterior = subasta.getEstado();
+                    subasta.setGanador(null);
+                    subasta.setMontoActual(subasta.getPrecioBase());
+                    subasta.setFechaAdjudicacion(null);
+                    subasta.setEstado(EstadoSubasta.BORRADOR);
+                    subastaRepository.save(subasta);
+                    registrarHistorialEstado(subasta, anterior, EstadoSubasta.BORRADOR,
+                            "Pago no realizado en el plazo de 48 horas", null);
+                    eventPublisher.publishEvent(new PagoVencidoEvent(subasta.getId()));
+                    log.info("Subasta {} revertida a BORRADOR por pago vencido", subasta.getId());
+                }
+            } catch (Exception e) {
+                log.error("Error al procesar pago vencido de subasta {}: {}", subasta.getId(), e.getMessage(), e);
             }
         }
     }

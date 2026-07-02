@@ -91,6 +91,12 @@ export default function CatalogoPage() {
   const [bidError, setBidError] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<string[]>([]);
 
+  // Refresca el catálogo cada 60s para reflejar cambios de estado (ej. PUBLICADA → ACTIVA) sin depender de SSE
+  useEffect(() => {
+    const t = setInterval(() => { recargar(); }, 60000);
+    return () => clearInterval(t);
+  }, [recargar]);
+
   useEffect(() => {
     api.get<Categoria[]>('/api/categorias').then(({ data }) => {
       setCategorias(['Todos', ...data.map(c => c.nombre)]);
